@@ -33,7 +33,7 @@
         }
     </style>
 </head>
-<body class="p-3 max-w-md mx-auto h-screen">
+<body class="p-3 max-w-md mx-auto h-screen flex flex-col justify-between">
 
     <!-- Header -->
     <header class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-3 shadow-lg">
@@ -50,11 +50,10 @@
         <div class="w-full bg-slate-700/60 rounded-full h-2 overflow-hidden">
             <div id="level-progress" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
         </div>
-     instruction</div>
     </header>
 
     <!-- Canvas Game Engine -->
-    <main class="flex-1 flex items-center justify-center my-2">
+    <main class="flex-1 flex items-center justify-center my-1 overflow-hidden">
         <canvas id="gameCanvas"></canvas>
     </main>
 
@@ -85,18 +84,20 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Game Configuration
         const GRID_SIZE = 8;
         let cellSize = 0;
         let boardOffsetX = 0;
         let boardOffsetY = 0;
+        let dockY = 0;
         
+        // Օֆսեթ, որպեսզի ֆիգուրը լինի մատից մի փոքր վերև
+        const TOUCH_OFFSET_Y = 50; 
+
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         let score = 0;
         let level = 1;
         let levelGoal = 200;
 
-        // Shape Templates
         const SHAPES = [
             [[1, 1], [1, 1]], 
             [[1, 1, 1]], [[1], [1], [1]], 
@@ -106,12 +107,15 @@
         ];
 
         let dock = [null, null, null];
-        let dragging = null; // { shape, index, x, y, touchOffsetX, touchOffsetY }
+        let dragging = null;
 
-        // Setup Canvas Size dynamically
         function resizeCanvas() {
-            const width = Math.min(window.innerWidth - 32, 400);
-            const height = width * 1.45; 
+            const container = canvas.parentElement;
+            const maxWidth = Math.min(container.clientWidth - 10, 360);
+            const maxHeight = container.clientHeight - 10;
+            
+            const width = Math.min(maxWidth, maxHeight / 1.35);
+            const height = width * 1.35; 
             
             canvas.width = width * window.devicePixelRatio;
             canvas.height = height * window.devicePixelRatio;
@@ -120,9 +124,10 @@
             
             ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-            cellSize = (width - 20) / GRID_SIZE;
-            boardOffsetX = 10;
-            boardOffsetY = 10;
+            cellSize = (width - 16) / GRID_SIZE;
+            boardOffsetX = 8;
+            boardOffsetY = 8;
+            dockY = boardOffsetY + (cellSize * GRID_SIZE) + 15;
 
             draw();
         }
@@ -135,18 +140,34 @@
             }
         }
 
-        // Draw Canvas Frame
+        // Գտնում է ֆիգուրի կենտրոնին համապատասխանող վանդակը
+        function getShapeBoardTarget(dragX, dragY, shape) {
+            const shapeWidthPx = shape[0].length * cellSize;
+            const shapeHeightPx = shape.length * cellSize;
+
+            // Ֆիգուրի վերին-ձախ անկյան կոորդինատը
+            const shapeLeftX = dragX - shapeWidthPx / 2;
+            const shapeTopY = (dragY - TOUCH_OFFSET_Y) - shapeHeightPx / 2;
+
+            const col = Math.round((shapeLeftX - boardOffsetX) / cellSize);
+            const row = Math.round((shapeTopY - boardOffsetY) / cellSize);
+
+            return { r: row, c: col };
+        }
+
         function draw() {
             const width = canvas.width / window.devicePixelRatio;
             const height = canvas.height / window.devicePixelRatio;
 
             ctx.clearRect(0, 0, width, height);
 
-            // 1. Draw Board Grid
+            // 1. Board Background
             ctx.fillStyle = '#1e293b';
-            ctx.roundRect(boardOffsetX - 5, boardOffsetY - 5, (cellSize * GRID_SIZE) + 10, (cellSize * GRID_SIZE) + 10, 12);
+            ctx.beginPath();
+            ctx.roundRect(boardOffsetX - 4, boardOffsetY - 4, (cellSize * GRID_SIZE) + 8, (cellSize * GRID_SIZE) + 8, 12);
             ctx.fill();
 
+            // 2. Board Grid Cells
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
                     const x = boardOffsetX + c * cellSize;
@@ -154,23 +175,23 @@
                     
                     ctx.fillStyle = board[r][c] ? '#4f46e5' : '#334155';
                     ctx.beginPath();
-                    ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6);
+                    ctx.roundRect(x + 1.5, y + 1.5, cellSize - 3, cellSize - 3, 5);
                     ctx.fill();
                 }
             }
 
-            // 2. Preview Hover Placement if Dragging
+            // 3. Highlight Hover / Preview Placement
             if (dragging) {
-                const hoverCell = getGridCellUnderTouch(dragging.x, dragging.y - 50); // Shift preview above finger
-                if (hoverCell && canPlace(dragging.shape, hoverCell.r, hoverCell.c)) {
-                    ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+                const target = getShapeBoardTarget(dragging.x, dragging.y, dragging.shape);
+                if (canPlace(dragging.shape, target.r, target.c)) {
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
                     for (let sr = 0; sr < dragging.shape.length; sr++) {
                         for (let sc = 0; sc < dragging.shape[sr].length; sc++) {
                             if (dragging.shape[sr][sc]) {
-                                const px = boardOffsetX + (hoverCell.c + sc) * cellSize;
-                                const py = boardOffsetY + (hoverCell.r + sr) * cellSize;
+                                const px = boardOffsetX + (target.c + sc) * cellSize;
+                                const py = boardOffsetY + (target.r + sr) * cellSize;
                                 ctx.beginPath();
-                                ctx.roundRect(px + 2, py + 2, cellSize - 4, cellSize - 4, 6);
+                                ctx.roundRect(px + 1.5, py + 1.5, cellSize - 3, cellSize - 3, 5);
                                 ctx.fill();
                             }
                         }
@@ -178,29 +199,34 @@
                 }
             }
 
-            // 3. Draw Dock Shapes
-            const dockY = boardOffsetY + (cellSize * GRID_SIZE) + 20;
-            const dockWidth = width / 3;
+            // 4. Dock Background
+            const dockHeight = height - dockY - 5;
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+            ctx.beginPath();
+            ctx.roundRect(0, dockY - 5, width, dockHeight, 12);
+            ctx.fill();
 
+            // 5. Dock Shapes
+            const dockWidth = width / 3;
             for (let i = 0; i < 3; i++) {
                 if (dock[i] && (!dragging || dragging.index !== i)) {
                     const shape = dock[i];
-                    const miniCell = cellSize * 0.55;
+                    const miniCell = cellSize * 0.45;
                     const shapeW = shape[0].length * miniCell;
                     const shapeH = shape.length * miniCell;
                     
                     const startX = (i * dockWidth) + (dockWidth - shapeW) / 2;
-                    const startY = dockY + (60 - shapeH) / 2;
+                    const startY = dockY + (dockHeight - shapeH) / 2;
 
                     drawShape(shape, startX, startY, miniCell);
                 }
             }
 
-            // 4. Draw Active Dragging Shape
+            // 6. Active Dragged Shape
             if (dragging) {
                 const shape = dragging.shape;
                 const drawX = dragging.x - (shape[0].length * cellSize) / 2;
-                const drawY = dragging.y - 60 - (shape.length * cellSize) / 2; // Offset above finger
+                const drawY = (dragging.y - TOUCH_OFFSET_Y) - (shape.length * cellSize) / 2;
                 drawShape(shape, drawX, drawY, cellSize, true);
             }
         }
@@ -218,7 +244,6 @@
             }
         }
 
-        // Pointer Events for Ultra-Fast Drag & Drop
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -232,22 +257,23 @@
         canvas.addEventListener('pointerdown', (e) => {
             const pos = getPos(e);
             const width = canvas.width / window.devicePixelRatio;
-            const dockY = boardOffsetY + (cellSize * GRID_SIZE) + 20;
             const dockWidth = width / 3;
 
-            for (let i = 0; i < 3; i++) {
-                if (dock[i]) {
-                    const startX = i * dockWidth;
-                    if (pos.x >= startX && pos.x <= startX + dockWidth && pos.y >= dockY) {
-                        dragging = {
-                            shape: dock[i],
-                            index: i,
-                            x: pos.x,
-                            y: pos.y
-                        };
-                        if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-                        draw();
-                        break;
+            if (pos.y >= dockY - 10) {
+                for (let i = 0; i < 3; i++) {
+                    if (dock[i]) {
+                        const startX = i * dockWidth;
+                        if (pos.x >= startX && pos.x <= startX + dockWidth) {
+                            dragging = {
+                                shape: dock[i],
+                                index: i,
+                                x: pos.x,
+                                y: pos.y
+                            };
+                            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                            draw();
+                            break;
+                        }
                     }
                 }
             }
@@ -264,10 +290,11 @@
         canvas.addEventListener('pointerup', () => {
             if (!dragging) return;
 
-            const hoverCell = getGridCellUnderTouch(dragging.x, dragging.y - 50);
+            // Ճշգրիտ հաշվարկում ենք նույն target-ը, ինչ preview-ի ժամանակ
+            const target = getShapeBoardTarget(dragging.x, dragging.y, dragging.shape);
 
-            if (hoverCell && canPlace(dragging.shape, hoverCell.r, hoverCell.c)) {
-                placeShape(dragging.shape, hoverCell.r, hoverCell.c);
+            if (canPlace(dragging.shape, target.r, target.c)) {
+                placeShape(dragging.shape, target.r, target.c);
                 dock[dragging.index] = null;
                 
                 if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -285,17 +312,8 @@
             draw();
         });
 
-        function getGridCellUnderTouch(x, y) {
-            const c = Math.floor((x - boardOffsetX) / cellSize);
-            const r = Math.floor((y - boardOffsetY) / cellSize);
-
-            if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
-                return { r, c };
-            }
-            return null;
-        }
-
         function canPlace(shape, r, c) {
+            if (r < 0 || c < 0) return false;
             for (let sr = 0; sr < shape.length; sr++) {
                 for (let sc = 0; sc < shape[sr].length; sc++) {
                     if (shape[sr][sc]) {
@@ -352,7 +370,7 @@
         window.addEventListener('resize', resizeCanvas);
         
         initDock();
-        resizeCanvas();
+        setTimeout(resizeCanvas, 50);
     </script>
 </body>
 </html>
