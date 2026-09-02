@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Block Crush Telegram Mini App</title>
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -81,13 +84,13 @@
             border-radius: 3px;
         }
 
-        /* Dragging element-ի ձևավորում */
+        /* Dragging element-ի ձևավորում՝ ճշգրիտ մատի կենտրոնում */
         .dragging {
             position: fixed !important;
             pointer-events: none !important;
             z-index: 1000 !important;
-            transform: translate(-50%, calc(-50% - 60px)) scale(1.15) !important;
-            opacity: 0.9;
+            transform: translate(-50%, -50%) scale(1.1) !important;
+            opacity: 0.85;
             filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
         }
 
@@ -102,6 +105,7 @@
 </head>
 <body class="flex flex-col h-screen justify-between p-3 max-w-md mx-auto">
 
+    <!-- Header & Level Info -->
     <header class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-3 shadow-lg">
         <div class="flex justify-between items-center mb-2">
             <div>
@@ -114,6 +118,7 @@
             </div>
         </div>
 
+        <!-- Level Progress Bar -->
         <div class="w-full bg-slate-700/60 rounded-full h-2.5 overflow-hidden">
             <div id="level-progress" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
         </div>
@@ -123,21 +128,26 @@
         </div>
     </header>
 
+    <!-- TAB 1: GAME SECTION -->
     <div id="tab-game" class="tab-content flex-1 flex flex-col justify-between my-1">
         <div class="text-center my-1 text-xs text-slate-300 font-medium bg-slate-800/50 py-1 px-3 rounded-lg border border-slate-700/30">
             🖐️ Քաշեք ֆիգուրը դեպի տախտակը
         </div>
 
+        <!-- Main Game Board -->
         <main class="flex-1 flex flex-col justify-center items-center my-1">
             <div class="w-full">
                 <div id="board" class="grid-board"></div>
             </div>
         </main>
 
+        <!-- Shape Selection Dock -->
         <div class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-2 min-h-[95px] flex justify-around items-center gap-2" id="shapes-dock">
-            </div>
+            <!-- 3 shapes will render here -->
+        </div>
     </div>
 
+    <!-- TAB 2: TASKS SECTION -->
     <div id="tab-tasks" class="tab-content flex-1 hidden my-2 overflow-y-auto">
         <div class="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4">
             <h2 class="text-lg font-bold text-amber-400 mb-3"><i class="fa-solid fa-list-check mr-2"></i>Առաջադրանքներ</h2>
@@ -160,6 +170,7 @@
         </div>
     </div>
 
+    <!-- TAB 3: FRIENDS SECTION -->
     <div id="tab-friends" class="tab-content flex-1 hidden my-2 overflow-y-auto">
         <div class="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4 text-center">
             <h2 class="text-lg font-bold text-amber-400 mb-2"><i class="fa-solid fa-users mr-2"></i>Հրավիրիր ընկերների</h2>
@@ -174,6 +185,7 @@
         </div>
     </div>
 
+    <!-- TAB 4: WALLET SECTION -->
     <div id="tab-wallet" class="tab-content flex-1 hidden my-2 overflow-y-auto">
         <div class="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4 text-center">
             <h2 class="text-lg font-bold text-amber-400 mb-2"><i class="fa-solid fa-wallet mr-2"></i>Web3 Քսակ</h2>
@@ -188,6 +200,7 @@
         </div>
     </div>
 
+    <!-- Navigation Bar -->
     <nav class="grid grid-cols-4 gap-1 bg-slate-800/90 border border-slate-700/50 p-1.5 rounded-2xl">
         <button onclick="switchTab('game')" id="btn-game" class="nav-btn active flex flex-col items-center p-1.5 text-slate-400 hover:text-white">
             <i class="fa-solid fa-gamepad text-base"></i>
@@ -207,6 +220,7 @@
         </button>
     </nav>
 
+    <!-- Modal -->
     <div id="modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl text-center max-w-xs w-full shadow-2xl">
             <div class="text-4xl mb-2">🎉</div>
@@ -363,25 +377,26 @@
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
+            // Ֆիգուրայի կենտրոնը ճշգրիտ համընկնում է մատի կետի հետ
             activeDragElement.style.left = `${clientX}px`;
             activeDragElement.style.top = `${clientY}px`;
 
-            highlightGridHover(clientX, clientY - 60);
+            highlightGridHover(clientX, clientY);
         }
 
-        /* Ճշգրտված Smart Snap (Մագնիսական հաշվարկ) */
+        /* Ճշգրիտ մատի կետով տեղադրման որոշում */
         function getTargetBoardCell(x, y) {
             const board = document.getElementById('board');
             const boardRect = board.getBoundingClientRect();
 
-            if (x < boardRect.left - 50 || x > boardRect.right + 50 ||
-                y < boardRect.top - 50 || y > boardRect.bottom + 50) {
+            if (x < boardRect.left - 40 || x > boardRect.right + 40 ||
+                y < boardRect.top - 40 || y > boardRect.bottom + 40) {
                 return null;
             }
 
             const cells = document.querySelectorAll('.cell');
             let closestCell = null;
-            let minDistance = 80;
+            let minDistance = 70;
 
             cells.forEach(cell => {
                 const rect = cell.getBoundingClientRect();
@@ -430,7 +445,7 @@
             const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
             const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
 
-            const targetCell = getTargetBoardCell(clientX, clientY - 60);
+            const targetCell = getTargetBoardCell(clientX, clientY);
             let placed = false;
 
             if (targetCell && activeShapeData) {
