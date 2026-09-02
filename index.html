@@ -90,8 +90,8 @@
         let boardOffsetY = 0;
         let dockY = 0;
         
-        // Օֆսեթ, որպեսզի ֆիգուրը լինի մատից մի փոքր վերև
-        const TOUCH_OFFSET_Y = 50; 
+        // Օֆսեթ մատից վերև
+        const TOUCH_OFFSET_Y = 60; 
 
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         let score = 0;
@@ -140,17 +140,18 @@
             }
         }
 
-        // Գտնում է ֆիգուրի կենտրոնին համապատասխանող վանդակը
+        // Ճշգրիտ Snap-to-Grid հաշվարկ աջ, ձախ, վերև և ներքև եզրերի համար
         function getShapeBoardTarget(dragX, dragY, shape) {
             const shapeWidthPx = shape[0].length * cellSize;
             const shapeHeightPx = shape.length * cellSize;
 
-            // Ֆիգուրի վերին-ձախ անկյան կոորդինատը
-            const shapeLeftX = dragX - shapeWidthPx / 2;
-            const shapeTopY = (dragY - TOUCH_OFFSET_Y) - shapeHeightPx / 2;
+            // Ֆիգուրի վերին-ձախ անկյունը
+            const topLeftX = dragX - shapeWidthPx / 2;
+            const topLeftY = (dragY - TOUCH_OFFSET_Y) - shapeHeightPx / 2;
 
-            const col = Math.round((shapeLeftX - boardOffsetX) / cellSize);
-            const row = Math.round((shapeTopY - boardOffsetY) / cellSize);
+            // Հաշվում ենք ամենամոտ սյունն ու տողը
+            let col = Math.round((topLeftX - boardOffsetX) / cellSize);
+            let row = Math.round((topLeftY - boardOffsetY) / cellSize);
 
             return { r: row, c: col };
         }
@@ -180,7 +181,7 @@
                 }
             }
 
-            // 3. Highlight Hover / Preview Placement
+            // 3. Highlight Preview (Եթե հնարավոր է տեղադրել)
             if (dragging) {
                 const target = getShapeBoardTarget(dragging.x, dragging.y, dragging.shape);
                 if (canPlace(dragging.shape, target.r, target.c)) {
@@ -290,7 +291,6 @@
         canvas.addEventListener('pointerup', () => {
             if (!dragging) return;
 
-            // Ճշգրիտ հաշվարկում ենք նույն target-ը, ինչ preview-ի ժամանակ
             const target = getShapeBoardTarget(dragging.x, dragging.y, dragging.shape);
 
             if (canPlace(dragging.shape, target.r, target.c)) {
@@ -313,12 +313,13 @@
         });
 
         function canPlace(shape, r, c) {
-            if (r < 0 || c < 0) return false;
             for (let sr = 0; sr < shape.length; sr++) {
                 for (let sc = 0; sc < shape[sr].length; sc++) {
                     if (shape[sr][sc]) {
-                        let nr = r + sr, nc = c + sc;
-                        if (nr >= GRID_SIZE || nc >= GRID_SIZE || board[nr][nc]) {
+                        let nr = r + sr;
+                        let nc = c + sc;
+                        // Ստուգում ենք խաղադաշտի բոլոր 4 սահմանները
+                        if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE || board[nr][nc]) {
                             return false;
                         }
                     }
