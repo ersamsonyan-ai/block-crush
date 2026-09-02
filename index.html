@@ -35,12 +35,11 @@
 </head>
 <body class="p-3 max-w-md mx-auto h-screen flex flex-col justify-between">
 
-    <!-- Header -->
     <header class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-3 shadow-lg">
         <div class="flex justify-between items-center mb-1">
             <div>
-                <p class="text-xs text-slate-400 font-medium">Միավորներ</p>
-                <p class="text-xl font-black text-amber-400"><span id="score">0</span> $BLOCKS</p>
+                <p class="text-xs text-slate-400 font-medium">Ընդհանուր $BLOCKS</p>
+                <p class="text-xl font-black text-amber-400"><span id="score">0</span></p>
             </div>
             <div class="text-right">
                 <p class="text-xs text-slate-400 font-medium">Մակարդակ</p>
@@ -52,12 +51,10 @@
         </div>
     </header>
 
-    <!-- Canvas Game Engine -->
     <main class="flex-1 flex items-center justify-center my-1 overflow-hidden">
         <canvas id="gameCanvas"></canvas>
     </main>
 
-    <!-- Navigation -->
     <nav class="grid grid-cols-4 gap-1 bg-slate-800/90 border border-slate-700/50 p-1.5 rounded-2xl">
         <button class="flex flex-col items-center p-1 text-amber-400">
             <i class="fa-solid fa-gamepad text-base"></i>
@@ -77,6 +74,15 @@
         </button>
     </nav>
 
+    <div id="modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl text-center max-w-xs w-full shadow-2xl">
+            <div class="text-4xl mb-2" id="modal-icon">🎮</div>
+            <h2 id="modal-title" class="text-xl font-bold text-amber-400 mb-1">Game Over</h2>
+            <p id="modal-desc" class="text-sm text-slate-300 mb-4">Այլևս քայլ չկա։</p>
+            <button id="modal-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl shadow-lg transition">Կրկին փորձել</button>
+        </div>
+    </div>
+
     <script>
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.expand(); tg.ready(); }
@@ -90,13 +96,14 @@
         let boardOffsetY = 0;
         let dockY = 0;
         
-        // Օֆսեթ մատից վերև
         const TOUCH_OFFSET_Y = 60; 
 
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
-        let score = 0;
-        let level = 1;
-        let levelGoal = 200;
+        
+        // LocalStorage Data Retrieval (Պահպանված տվյալների վերականգնում)
+        let totalScore = parseInt(localStorage.getItem('blockudoku_score')) || 0;
+        let level = parseInt(localStorage.getItem('blockudoku_level')) || 1;
+        let levelGoal = level * 200;
 
         const SHAPES = [
             [[1, 1], [1, 1]], 
@@ -108,6 +115,22 @@
 
         let dock = [null, null, null];
         let dragging = null;
+
+        function updateUI() {
+            document.getElementById('score').innerText = totalScore;
+            document.getElementById('level-display').innerText = `Level ${level}`;
+            
+            const prevGoal = (level - 1) * 200;
+            const currentProgress = totalScore - prevGoal;
+            const targetProgress = levelGoal - prevGoal;
+            const progressPct = Math.min(Math.max((currentProgress / targetProgress) * 100, 0), 100);
+            
+            document.getElementById('level-progress').style.width = `${progressPct}%`;
+
+            // Save state
+            localStorage.setItem('blockudoku_score', totalScore);
+            localStorage.setItem('blockudoku_level', level);
+        }
 
         function resizeCanvas() {
             const container = canvas.parentElement;
@@ -140,16 +163,13 @@
             }
         }
 
-        // Ճշգրիտ Snap-to-Grid հաշվարկ աջ, ձախ, վերև և ներքև եզրերի համար
         function getShapeBoardTarget(dragX, dragY, shape) {
             const shapeWidthPx = shape[0].length * cellSize;
             const shapeHeightPx = shape.length * cellSize;
 
-            // Ֆիգուրի վերին-ձախ անկյունը
             const topLeftX = dragX - shapeWidthPx / 2;
             const topLeftY = (dragY - TOUCH_OFFSET_Y) - shapeHeightPx / 2;
 
-            // Հաշվում ենք ամենամոտ սյունն ու տողը
             let col = Math.round((topLeftX - boardOffsetX) / cellSize);
             let row = Math.round((topLeftY - boardOffsetY) / cellSize);
 
@@ -181,7 +201,7 @@
                 }
             }
 
-            // 3. Highlight Preview (Եթե հնարավոր է տեղադրել)
+            // 3. Highlight Preview
             if (dragging) {
                 const target = getShapeBoardTarget(dragging.x, dragging.y, dragging.shape);
                 if (canPlace(dragging.shape, target.r, target.c)) {
@@ -304,6 +324,7 @@
                 if (dock.every(s => s === null)) {
                     initDock();
                 }
+                checkGameOver();
             } else {
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
             }
@@ -318,7 +339,6 @@
                     if (shape[sr][sc]) {
                         let nr = r + sr;
                         let nc = c + sc;
-                        // Ստուգում ենք խաղադաշտի բոլոր 4 սահմանները
                         if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE || board[nr][nc]) {
                             return false;
                         }
@@ -358,18 +378,66 @@
 
             cleared = fullRows.length + fullCols.length;
             if (cleared > 0) {
-                score += cleared * 20;
-                document.getElementById('score').innerText = score;
+                totalScore += cleared * 20;
                 
-                const progressPct = Math.min((score / levelGoal) * 100, 100);
-                document.getElementById('level-progress').style.width = `${progressPct}%`;
-                
+                if (totalScore >= levelGoal) {
+                    level++;
+                    levelGoal = level * 200;
+                    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                }
+
+                updateUI();
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             }
         }
 
+        function checkGameOver() {
+            let canMoveAny = false;
+            for (let i = 0; i < dock.length; i++) {
+                const shape = dock[i];
+                if (!shape) continue;
+
+                for (let r = 0; r < GRID_SIZE; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        if (canPlace(shape, r, c)) {
+                            canMoveAny = true;
+                            break;
+                        }
+                    }
+                    if (canMoveAny) break;
+                }
+                if (canMoveAny) break;
+            }
+
+            if (!canMoveAny && dock.some(s => s !== null)) {
+                showModal('Game Over', 'Այլևս քայլ չկա։ Ձեր հավաքած միավորները պահպանված են։');
+            }
+        }
+
+        function showModal(title, desc) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerText = desc;
+            
+            const btn = document.getElementById('modal-btn');
+            btn.onclick = restartBoardOnly;
+            
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        // Միայն խաղադաշտն է մաքրվում, միավորները ՄՆՈՒՄ ԵՆ
+        function restartBoardOnly() {
+            board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+            dock = [null, null, null];
+            
+            document.getElementById('modal').classList.add('hidden');
+            
+            initDock();
+            draw();
+        }
+
         window.addEventListener('resize', resizeCanvas);
         
+        updateUI();
         initDock();
         setTimeout(resizeCanvas, 50);
     </script>
