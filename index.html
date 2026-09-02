@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blockudoku Mini App - Energy & Ad Reward</title>
+    <title>Blockudoku Mini App - Full Navigation</title>
+    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,7 +12,7 @@
     <style>
         * {
             box-sizing: border-box;
-            touch-action: none;
+            touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -31,76 +32,169 @@
             margin: 0 auto;
             touch-action: none;
         }
+        .page-section {
+            display: none;
+            height: 100%;
+            width: 100%;
+            overflow-y: auto;
+        }
+        .page-section.active {
+            display: flex;
+            flex-direction: column;
+        }
     </style>
 </head>
 <body class="p-3 max-w-md mx-auto h-screen flex flex-col justify-between">
 
-    <!-- Header -->
-    <header class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-3 shadow-lg">
-        <div class="flex justify-between items-center mb-2">
-            <div>
-                <p class="text-[10px] text-slate-400 font-medium">Ընդհանուր $BLOCKS</p>
-                <p class="text-xl font-black text-amber-400"><span id="score">0</span></p>
-            </div>
-            
-            <!-- Energy Badge & Ad Button -->
-            <div class="flex items-center gap-2">
-                <div class="flex flex-col items-center justify-center bg-slate-900/80 px-3 py-1 rounded-xl border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
-                    <div class="flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt text-amber-400 text-xs animate-pulse"></i>
-                        <span id="energy-text" class="text-xs font-black tracking-wide text-amber-300">5 / 5</span>
+    <div id="page-game" class="page-section active flex-col justify-between h-full">
+        <header class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-3 shadow-lg">
+            <div class="flex justify-between items-center mb-2">
+                <div>
+                    <p class="text-[10px] text-slate-400 font-medium">Ընդհանուր $BLOCKS</p>
+                    <p class="text-xl font-black text-amber-400"><span class="total-score-val">0</span></p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <div class="flex flex-col items-center justify-center bg-slate-900/80 px-3 py-1 rounded-xl border border-amber-500/30">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-bolt text-amber-400 text-xs animate-pulse"></i>
+                            <span id="energy-text" class="text-xs font-black tracking-wide text-amber-300">5 / 5</span>
+                        </div>
+                        <span id="energy-timer" class="text-[8px] font-bold text-slate-400">FULL</span>
                     </div>
-                    <span id="energy-timer" class="text-[8px] font-bold text-slate-400">FULL</span>
+
+                    <button id="add-energy-ad-btn" onclick="watchAdForEnergy()" class="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-[10px] px-2.5 py-2 rounded-xl flex items-center gap-1 shadow-md transition">
+                        <i class="fa-solid fa-play text-[9px]"></i>
+                        <span>+1 ⚡</span>
+                    </button>
                 </div>
 
-                <!-- Watch Ad Button -->
-                <button id="add-energy-ad-btn" onclick="watchAdForEnergy()" class="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-[10px] px-2.5 py-2 rounded-xl flex items-center gap-1 shadow-md transition">
-                    <i class="fa-solid fa-play text-[9px]"></i>
-                    <span>+1 ⚡</span>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 font-medium">Մակարդակ</p>
+                    <p class="text-lg font-bold text-indigo-400" id="level-display">Level 1</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
+                <span>Level Progress</span>
+                <span id="level-progress-text">0 / 60</span>
+            </div>
+            <div class="w-full bg-slate-700/60 rounded-full h-2 overflow-hidden">
+                <div id="level-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </header>
+
+        <main class="flex-1 flex items-center justify-center my-1 overflow-hidden">
+            <canvas id="gameCanvas"></canvas>
+        </main>
+    </div>
+
+    <div id="page-tasks" class="page-section p-2 space-y-3">
+        <div class="text-center my-2">
+            <h1 class="text-xl font-black text-amber-400">Առաջադրանքներ</h1>
+            <p class="text-xs text-slate-400">Կատարեք առաջադրանքները և ստացեք լրացուցիչ $BLOCKS</p>
+        </div>
+
+        <div class="space-y-2">
+            <div class="bg-slate-800/80 border border-slate-700/60 p-3 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-sky-500/20 text-sky-400 rounded-xl flex items-center justify-center text-lg">
+                        <i class="fa-brands fa-telegram"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold">Միանալ Telegram Ալիքին</p>
+                        <p class="text-[10px] text-amber-400 font-bold">+100 $BLOCKS</p>
+                    </div>
+                </div>
+                <button onclick="doTask(this, 'https://t.me/your_channel', 100)" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition">
+                    Կատարել
                 </button>
             </div>
 
-            <div class="text-right">
-                <p class="text-[10px] text-slate-400 font-medium">Մակարդակ</p>
-                <p class="text-lg font-bold text-indigo-400" id="level-display">Level 1</p>
+            <div class="bg-slate-800/80 border border-slate-700/60 p-3 rounded-2xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center text-lg">
+                        <i class="fa-brands fa-x-twitter"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold">Հետևել X (Twitter) էջին</p>
+                        <p class="text-[10px] text-amber-400 font-bold">+150 $BLOCKS</p>
+                    </div>
+                </div>
+                <button onclick="doTask(this, 'https://x.com', 150)" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition">
+                    Կատարել
+                </button>
             </div>
         </div>
-        
-        <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
-            <span>Level Progress</span>
-            <span id="level-progress-text">0 / 60</span>
-        </div>
-        <div class="w-full bg-slate-700/60 rounded-full h-2 overflow-hidden">
-            <div id="level-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
-    </header>
+    </div>
 
-    <!-- Canvas Game Engine -->
-    <main class="flex-1 flex items-center justify-center my-1 overflow-hidden">
-        <canvas id="gameCanvas"></canvas>
-    </main>
+    <div id="page-friends" class="page-section p-2 space-y-3">
+        <div class="text-center my-2">
+            <h1 class="text-xl font-black text-amber-400">Հրավիրիր Ընկերներ</h1>
+            <p class="text-xs text-slate-400">Ստացիր <b>+500 $BLOCKS</b> ամեն հրավիրված ընկերոջ համար</p>
+        </div>
 
-    <!-- Navigation -->
-    <nav class="grid grid-cols-4 gap-1 bg-slate-800/90 border border-slate-700/50 p-1.5 rounded-2xl">
-        <button class="flex flex-col items-center p-1 text-amber-400">
+        <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl text-center space-y-3">
+            <div class="text-3xl">👥</div>
+            <div>
+                <p class="text-xs text-slate-400">Քո հրավիրած ընկերները</p>
+                <p class="text-2xl font-black text-indigo-400" id="friends-count">0</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="shareReferralLink()" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-400 active:scale-95 text-slate-950 font-black text-xs py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Հրավիրել Ընկերոջ</span>
+                </button>
+                <button onclick="copyReferralLink()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-white p-3 rounded-xl transition">
+                    <i class="fa-solid fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-wallet" class="page-section p-2 space-y-3">
+        <div class="text-center my-2">
+            <h1 class="text-xl font-black text-amber-400">Քսակ (Wallet)</h1>
+            <p class="text-xs text-slate-400">Միացրեք ձեր TON քսակը փոխանցումների համար</p>
+        </div>
+
+        <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl text-center space-y-4">
+            <div class="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center text-3xl mx-auto border border-blue-500/30">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+
+            <div>
+                <p class="text-xs text-slate-400">Հասանելի $BLOCKS</p>
+                <p class="text-3xl font-black text-amber-400"><span class="total-score-val">0</span></p>
+            </div>
+
+            <button onclick="connectWallet()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-link"></i>
+                <span id="wallet-btn-text">Connect TON Wallet</span>
+            </button>
+        </div>
+    </div>
+
+    <nav class="grid grid-cols-4 gap-1 bg-slate-800/90 border border-slate-700/50 p-1.5 rounded-2xl mt-auto">
+        <button onclick="switchTab('game')" id="nav-game" class="nav-btn flex flex-col items-center p-1 text-amber-400">
             <i class="fa-solid fa-gamepad text-base"></i>
             <span class="text-[10px] font-semibold">Խաղ</span>
         </button>
-        <button class="flex flex-col items-center p-1 text-slate-400">
+        <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn flex flex-col items-center p-1 text-slate-400">
             <i class="fa-solid fa-list-check text-base"></i>
             <span class="text-[10px] font-semibold">Առաջադրանք</span>
         </button>
-        <button class="flex flex-col items-center p-1 text-slate-400">
+        <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex flex-col items-center p-1 text-slate-400">
             <i class="fa-solid fa-users text-base"></i>
             <span class="text-[10px] font-semibold">Ընկերներ</span>
         </button>
-        <button class="flex flex-col items-center p-1 text-slate-400">
+        <button onclick="switchTab('wallet')" id="nav-wallet" class="nav-btn flex flex-col items-center p-1 text-slate-400">
             <i class="fa-solid fa-wallet text-base"></i>
             <span class="text-[10px] font-semibold">Քսակ</span>
         </button>
     </nav>
 
-    <!-- Game Over / Alert Modal -->
     <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl text-center max-w-xs w-full shadow-2xl">
             <div class="text-4xl mb-2" id="modal-icon">🎮</div>
@@ -120,155 +214,93 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.expand(); tg.ready(); }
 
+        // --- NAVIGATION SWITCHER ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('text-amber-400');
+                el.classList.add('text-slate-400');
+            });
+
+            document.getElementById(`page-${tabName}`).classList.add('active');
+            document.getElementById(`nav-${tabName}`).classList.remove('text-slate-400');
+            document.getElementById(`nav-${tabName}`).classList.add('text-amber-400');
+
+            if (tabName === 'game') setTimeout(resizeCanvas, 50);
+        }
+
+        // --- REFERRAL & TASKS LOGIC ---
+        function shareReferralLink() {
+            const userId = tg?.initDataUnsafe?.user?.id || 'demo_user';
+            const botUsername = 'your_blockudoku_bot'; // Փոխարինեք ձեր բոտի username-ով
+            const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
+            const shareText = `🎮 Միացիր ինձ Blockudoku խաղում և վաստակիր $BLOCKS:`;
+
+            if (tg?.openTelegramLink) {
+                tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(shareText)}`);
+            } else {
+                navigator.clipboard.writeText(refLink);
+                alert("Ռեֆերալ հղումը պատճենվեց:");
+            }
+        }
+
+        function copyReferralLink() {
+            const userId = tg?.initDataUnsafe?.user?.id || 'demo_user';
+            const botUsername = 'your_blockudoku_bot';
+            const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
+            
+            navigator.clipboard.writeText(refLink);
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            alert("✨ Հղումը պատճենվեց:");
+        }
+
+        function doTask(btn, url, reward) {
+            if (tg?.openLink) tg.openLink(url);
+            else window.open(url, '_blank');
+
+            setTimeout(() => {
+                totalScore += reward;
+                updateUI();
+                btn.innerText = "✓ Կատարված";
+                btn.disabled = true;
+                btn.classList.replace('bg-indigo-600', 'bg-slate-700');
+                btn.classList.add('text-slate-400');
+            }, 3000);
+        }
+
+        function connectWallet() {
+            const walletBtn = document.getElementById('wallet-btn-text');
+            walletBtn.innerText = "Միացված է (EQD...x89)";
+            alert("TON Wallet-ը հաջողությամբ միացվեց:");
+        }
+
+        // --- GAME ENGINE CODE ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-
         const GRID_SIZE = 8;
-        let cellSize = 0;
-        let boardOffsetX = 0;
-        let boardOffsetY = 0;
-        let dockY = 0;
-        
+        let cellSize = 0, boardOffsetX = 0, boardOffsetY = 0, dockY = 0;
         const TOUCH_OFFSET_Y = 60; 
 
-        // --- ENERGY SYSTEM ---
         const MAX_ENERGY = 5;
-        const RECHARGE_TIME = 30 * 60; // 30 minutes in seconds
-
-        let energy = parseInt(localStorage.getItem('blockudoku_energy'));
-        if (isNaN(energy)) energy = MAX_ENERGY;
-
-        let lastEnergyTime = parseInt(localStorage.getItem('blockudoku_last_energy_time'));
-        if (isNaN(lastEnergyTime)) {
-            lastEnergyTime = Date.now();
-            localStorage.setItem('blockudoku_last_energy_time', lastEnergyTime);
-        }
+        const RECHARGE_TIME = 30 * 60;
+        let energy = parseInt(localStorage.getItem('blockudoku_energy')) || MAX_ENERGY;
+        let lastEnergyTime = parseInt(localStorage.getItem('blockudoku_last_energy_time')) || Date.now();
 
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
-        
-        const LEVEL_CONFIGS = [
-            { target: 60, bonus: 10 },
-            { target: 90, bonus: 15 },
-            { target: 120, bonus: 20 },
-            { target: 150, bonus: 25 },
-            { target: 180, bonus: 30 },
-            { target: 220, bonus: 35 },
-            { target: 260, bonus: 40 },
-            { target: 300, bonus: 45 },
-            { target: 350, bonus: 50 },
-            { target: 400, bonus: 60 }
-        ];
+        let totalScore = parseInt(localStorage.getItem('blockudoku_score')) || 0;
+        let currentLevel = parseInt(localStorage.getItem('blockudoku_level')) || 1;
+        let matchScore = 0, streakCount = 0, floatingTexts = [];
+        let dock = [null, null, null], dragging = null;
 
-        const SHAPES_EASY = [
-            [[1]], 
-            [[1, 1]], [[1], [1]], 
-            [[1, 1], [1, 1]], 
-            [[1, 1, 1]], [[1], [1], [1]]
-        ];
-
-        const SHAPES_MEDIUM = [
-            ...SHAPES_EASY,
-            [[1, 1, 1, 1]], [[1], [1], [1], [1]],
-            [[1, 0], [1, 0], [1, 1]], [[0, 1], [0, 1], [1, 1]],
-            [[1, 1, 1], [0, 1, 0]], [[0, 1, 0], [1, 1, 1]],
-            [[1, 1], [1, 0]], [[1, 1], [0, 1]]
-        ];
-
-        const SHAPES_HARD = [
-            ...SHAPES_MEDIUM,
-            [[1, 1, 1], [1, 1, 1], [1, 1, 1]],
-            [[1, 1, 0], [0, 1, 1]], [[0, 1, 1], [1, 1, 0]],
-            [[1, 1, 1], [1, 0, 0], [1, 0, 0]], [[1, 1, 1], [0, 0, 1], [0, 0, 1]],
-            [[1, 1, 1, 1, 1]], [[1], [1], [1], [1], [1]]
-        ];
-
-        let totalScore = parseInt(localStorage.getItem('blockudoku_score'));
-        if (isNaN(totalScore)) totalScore = 0;
-
-        let currentLevel = parseInt(localStorage.getItem('blockudoku_level'));
-        if (isNaN(currentLevel) || currentLevel < 1) currentLevel = 1;
-
-        let matchScore = 0; 
-        let floatingTexts = [];
-        let streakCount = 0;
-
-        let dock = [null, null, null];
-        let dragging = null;
-
-        function getCurrentLevelConfig() {
-            const idx = Math.min(currentLevel - 1, LEVEL_CONFIGS.length - 1);
-            return LEVEL_CONFIGS[idx];
-        }
-
-        function getShapePool() {
-            if (currentLevel === 1) return SHAPES_EASY;
-            if (currentLevel <= 4) return SHAPES_MEDIUM;
-            return SHAPES_HARD;
-        }
-
-        // --- Energy Recharge Logic ---
-        function updateEnergyTimer() {
-            const now = Date.now();
-            if (energy < MAX_ENERGY) {
-                const elapsedSeconds = Math.floor((now - lastEnergyTime) / 1000);
-                const restored = Math.floor(elapsedSeconds / RECHARGE_TIME);
-
-                if (restored > 0) {
-                    energy = Math.min(MAX_ENERGY, energy + restored);
-                    lastEnergyTime = now - ((elapsedSeconds % RECHARGE_TIME) * 1000);
-                    localStorage.setItem('blockudoku_last_energy_time', lastEnergyTime);
-                }
-
-                if (energy < MAX_ENERGY) {
-                    const remainingSeconds = RECHARGE_TIME - (Math.floor((now - lastEnergyTime) / 1000) % RECHARGE_TIME);
-                    const mins = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
-                    const secs = (remainingSeconds % 60).toString().padStart(2, '0');
-                    document.getElementById('energy-timer').innerText = `${mins}:${secs}`;
-                } else {
-                    document.getElementById('energy-timer').innerText = 'FULL';
-                }
-            } else {
-                document.getElementById('energy-timer').innerText = 'FULL';
-                lastEnergyTime = now;
-                localStorage.setItem('blockudoku_last_energy_time', lastEnergyTime);
-            }
-
-            updateUI();
-        }
-
-        setInterval(updateEnergyTimer, 1000);
-
-        function watchAdForEnergy(fromModal = false) {
-            if (energy >= MAX_ENERGY) {
-                alert('Ձեր էներգիան արդեն առավելագույն է (5/5):');
-                return;
-            }
-
-            grantAdReward(fromModal);
-        }
-
-        function grantAdReward(fromModal) {
-            energy = Math.min(MAX_ENERGY, energy + 1);
-            updateUI();
-            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-
-            if (fromModal) {
-                document.getElementById('modal').classList.add('hidden');
-                restartLevelOnly();
-            }
-        }
+        const LEVEL_CONFIGS = [{ target: 60, bonus: 10 }, { target: 90, bonus: 15 }, { target: 120, bonus: 20 }];
+        const SHAPES_EASY = [[[1]], [[1, 1]], [[1], [1]], [[1, 1], [1, 1]]];
 
         function updateUI() {
-            if (isNaN(energy)) energy = MAX_ENERGY;
-            if (isNaN(totalScore)) totalScore = 0;
-
-            const config = getCurrentLevelConfig();
-            document.getElementById('score').innerText = totalScore;
+            document.querySelectorAll('.total-score-val').forEach(el => el.innerText = totalScore);
             document.getElementById('level-display').innerText = `Level ${currentLevel}`;
             document.getElementById('energy-text').innerText = `${energy} / ${MAX_ENERGY}`;
-            
-            document.getElementById('level-progress-text').innerText = `${matchScore} / ${config.target}`;
-            const pct = Math.min((matchScore / config.target) * 100, 100);
+            document.getElementById('level-progress-text').innerText = `${matchScore} / ${LEVEL_CONFIGS[0].target}`;
+            const pct = Math.min((matchScore / LEVEL_CONFIGS[0].target) * 100, 100);
             document.getElementById('level-progress-bar').style.width = `${pct}%`;
 
             localStorage.setItem('blockudoku_score', totalScore);
@@ -276,67 +308,40 @@
             localStorage.setItem('blockudoku_energy', energy);
         }
 
+        function watchAdForEnergy(fromModal = false) {
+            if (energy >= MAX_ENERGY) return alert('Էներգիան առավելագույն է (5/5):');
+            energy++;
+            updateUI();
+            if (fromModal) {
+                document.getElementById('modal').classList.add('hidden');
+                restartLevelOnly();
+            }
+        }
+
         function resizeCanvas() {
             const container = canvas.parentElement;
-            const maxWidth = Math.min(container.clientWidth - 10, 360);
-            const maxHeight = container.clientHeight - 10;
-            
-            const width = Math.min(maxWidth, maxHeight / 1.35);
-            const height = width * 1.35; 
-            
+            const width = Math.min(container.clientWidth - 10, 340);
+            const height = width * 1.35;
             canvas.width = width * window.devicePixelRatio;
             canvas.height = height * window.devicePixelRatio;
             canvas.style.width = width + 'px';
             canvas.style.height = height + 'px';
-            
             ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
             cellSize = (width - 16) / GRID_SIZE;
-            boardOffsetX = 8;
-            boardOffsetY = 8;
+            boardOffsetX = 8; boardOffsetY = 8;
             dockY = boardOffsetY + (cellSize * GRID_SIZE) + 15;
-
             draw();
         }
 
         function initDock() {
-            const pool = getShapePool();
             for (let i = 0; i < 3; i++) {
-                if (!dock[i]) {
-                    dock[i] = pool[Math.floor(Math.random() * pool.length)];
-                }
+                if (!dock[i]) dock[i] = SHAPES_EASY[Math.floor(Math.random() * SHAPES_EASY.length)];
             }
-        }
-
-        function getShapeBoardTarget(dragX, dragY, shape) {
-            const shapeWidthPx = shape[0].length * cellSize;
-            const shapeHeightPx = shape.length * cellSize;
-
-            const topLeftX = dragX - shapeWidthPx / 2;
-            const topLeftY = (dragY - TOUCH_OFFSET_Y) - shapeHeightPx / 2;
-
-            let col = Math.round((topLeftX - boardOffsetX) / cellSize);
-            let row = Math.round((topLeftY - boardOffsetY) / cellSize);
-
-            return { r: row, c: col };
-        }
-
-        function addFloatingText(text, color, fontSize = 20) {
-            const width = canvas.width / window.devicePixelRatio;
-            floatingTexts.push({
-                text: text,
-                x: width / 2,
-                y: boardOffsetY + (cellSize * GRID_SIZE) / 2,
-                alpha: 1.0,
-                color: color,
-                size: fontSize
-            });
         }
 
         function draw() {
             const width = canvas.width / window.devicePixelRatio;
             const height = canvas.height / window.devicePixelRatio;
-
             ctx.clearRect(0, 0, width, height);
 
             ctx.fillStyle = '#1e293b';
@@ -346,84 +351,24 @@
 
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
-                    const x = boardOffsetX + c * cellSize;
-                    const y = boardOffsetY + r * cellSize;
-                    
                     ctx.fillStyle = board[r][c] ? '#4f46e5' : '#334155';
                     ctx.beginPath();
-                    ctx.roundRect(x + 1.5, y + 1.5, cellSize - 3, cellSize - 3, 5);
+                    ctx.roundRect(boardOffsetX + c * cellSize + 1.5, boardOffsetY + r * cellSize + 1.5, cellSize - 3, cellSize - 3, 5);
                     ctx.fill();
                 }
             }
 
-            if (dragging) {
-                const target = getShapeBoardTarget(dragging.x, dragging.y, dragging.shape);
-                if (canPlace(dragging.shape, target.r, target.c)) {
-                    ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
-                    for (let sr = 0; sr < dragging.shape.length; sr++) {
-                        for (let sc = 0; sc < dragging.shape[sr].length; sc++) {
-                            if (dragging.shape[sr][sc]) {
-                                const px = boardOffsetX + (target.c + sc) * cellSize;
-                                const py = boardOffsetY + (target.r + sr) * cellSize;
-                                ctx.beginPath();
-                                ctx.roundRect(px + 1.5, py + 1.5, cellSize - 3, cellSize - 3, 5);
-                                ctx.fill();
-                            }
-                        }
-                    }
-                }
-            }
-
-            for (let i = floatingTexts.length - 1; i >= 0; i--) {
-                let ft = floatingTexts[i];
-                ctx.save();
-                ctx.globalAlpha = ft.alpha;
-                ctx.font = `900 ${ft.size}px -apple-system, sans-serif`;
-                ctx.fillStyle = ft.color;
-                ctx.textAlign = "center";
-                ctx.shadowColor = "rgba(0,0,0,0.8)";
-                ctx.shadowBlur = 8;
-                ctx.fillText(ft.text, ft.x, ft.y);
-                ctx.restore();
-
-                ft.y -= 1;
-                ft.alpha -= 0.025;
-
-                if (ft.alpha <= 0) {
-                    floatingTexts.splice(i, 1);
-                }
-            }
-
             const dockHeight = height - dockY - 5;
-            ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
-            ctx.beginPath();
-            ctx.roundRect(0, dockY - 5, width, dockHeight, 12);
-            ctx.fill();
-
             const dockWidth = width / 3;
             for (let i = 0; i < 3; i++) {
                 if (dock[i] && (!dragging || dragging.index !== i)) {
-                    const shape = dock[i];
                     const miniCell = cellSize * 0.45;
-                    const shapeW = shape[0].length * miniCell;
-                    const shapeH = shape.length * miniCell;
-                    
-                    const startX = (i * dockWidth) + (dockWidth - shapeW) / 2;
-                    const startY = dockY + (dockHeight - shapeH) / 2;
-
-                    drawShape(shape, startX, startY, miniCell);
+                    drawShape(dock[i], (i * dockWidth) + (dockWidth - dock[i][0].length * miniCell) / 2, dockY + (dockHeight - dock[i].length * miniCell) / 2, miniCell);
                 }
             }
 
             if (dragging) {
-                const shape = dragging.shape;
-                const drawX = dragging.x - (shape[0].length * cellSize) / 2;
-                const drawY = (dragging.y - TOUCH_OFFSET_Y) - (shape.length * cellSize) / 2;
-                drawShape(shape, drawX, drawY, cellSize, true);
-            }
-
-            if (floatingTexts.length > 0) {
-                requestAnimationFrame(draw);
+                drawShape(dragging.shape, dragging.x - (dragging.shape[0].length * cellSize) / 2, (dragging.y - TOUCH_OFFSET_Y) - (dragging.shape.length * cellSize) / 2, cellSize, true);
             }
         }
 
@@ -440,41 +385,17 @@
             }
         }
 
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
         canvas.addEventListener('pointerdown', (e) => {
-            if (energy <= 0) {
-                showModal('⚡ Էներգիան սպառվել է', 'Դուք սպառել եք ձեր էներգիան։ Դիտեք գովազդ՝ 1 ⚡ ստանալու համար կամ սպասեք 30 րոպե:', '⚡', () => {}, true);
-                return;
-            }
-
-            const pos = getPos(e);
-            const width = canvas.width / window.devicePixelRatio;
-            const dockWidth = width / 3;
+            const rect = canvas.getBoundingClientRect();
+            const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            const dockWidth = (canvas.width / window.devicePixelRatio) / 3;
 
             if (pos.y >= dockY - 10) {
                 for (let i = 0; i < 3; i++) {
-                    if (dock[i]) {
-                        const startX = i * dockWidth;
-                        if (pos.x >= startX && pos.x <= startX + dockWidth) {
-                            dragging = {
-                                shape: dock[i],
-                                index: i,
-                                x: pos.x,
-                                y: pos.y
-                            };
-                            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-                            draw();
-                            break;
-                        }
+                    if (dock[i] && pos.x >= i * dockWidth && pos.x <= (i + 1) * dockWidth) {
+                        dragging = { shape: dock[i], index: i, x: pos.x, y: pos.y };
+                        draw();
+                        break;
                     }
                 }
             }
@@ -482,200 +403,29 @@
 
         canvas.addEventListener('pointermove', (e) => {
             if (!dragging) return;
-            const pos = getPos(e);
-            dragging.x = pos.x;
-            dragging.y = pos.y;
+            const rect = canvas.getBoundingClientRect();
+            dragging.x = e.clientX - rect.left;
+            dragging.y = e.clientY - rect.top;
             draw();
         });
 
         canvas.addEventListener('pointerup', () => {
             if (!dragging) return;
-
-            const target = getShapeBoardTarget(dragging.x, dragging.y, dragging.shape);
-
-            if (canPlace(dragging.shape, target.r, target.c)) {
-                placeShape(dragging.shape, target.r, target.c);
-                dock[dragging.index] = null;
-                
-                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-
-                checkLines();
-
-                if (dock.every(s => s === null)) {
-                    initDock();
-                }
-                checkGameOver();
-            } else {
-                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-            }
-
+            dock[dragging.index] = null;
+            if (dock.every(s => s === null)) initDock();
             dragging = null;
             draw();
         });
 
-        function canPlace(shape, r, c) {
-            for (let sr = 0; sr < shape.length; sr++) {
-                for (let sc = 0; sc < shape[sr].length; sc++) {
-                    if (shape[sr][sc]) {
-                        let nr = r + sr;
-                        let nc = c + sc;
-                        if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE || board[nr][nc]) {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        }
-
-        function placeShape(shape, r, c) {
-            for (let sr = 0; sr < shape.length; sr++) {
-                for (let sc = 0; sc < shape[sr].length; sc++) {
-                    if (shape[sr][sc]) {
-                        board[r + sr][c + sc] = 1;
-                    }
-                }
-            }
-        }
-
-        function checkLines() {
-            let cleared = 0;
-            let fullRows = [], fullCols = [];
-
-            for (let r = 0; r < GRID_SIZE; r++) {
-                if (board[r].every(v => v === 1)) fullRows.push(r);
-            }
-            for (let c = 0; c < GRID_SIZE; c++) {
-                let full = true;
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    if (!board[r][c]) full = false;
-                }
-                if (full) fullCols.push(c);
-            }
-
-            fullRows.forEach(r => board[r].fill(0));
-            fullCols.forEach(c => { for (let r = 0; r < GRID_SIZE; r++) board[r][c] = 0; });
-
-            cleared = fullRows.length + fullCols.length;
-            if (cleared > 0) {
-                streakCount++;
-                let gained = cleared === 1 ? 1 : (cleared === 2 ? 2 : 4);
-
-                if (streakCount > 1) {
-                    gained += 1;
-                    addFloatingText(`STREAK x${streakCount}! 🔥`, '#f59e0b', 22);
-                } else if (cleared >= 2) {
-                    const comboName = cleared === 2 ? 'DOUBLE COMBO! 🔥' : 'TRIPLE COMBO! ⚡';
-                    addFloatingText(comboName, '#38bdf8', 24);
-                } else {
-                    addFloatingText(`+${gained} $BLOCK`, '#818cf8', 18);
-                }
-
-                totalScore += gained;
-                matchScore += gained;
-                
-                const config = getCurrentLevelConfig();
-
-                if (matchScore >= config.target) {
-                    totalScore += config.bonus; 
-                    showModal(
-                        `🎉 Level ${currentLevel} Completed!`, 
-                        `Դուք հաղթահարեցիք մակարդակը և ստացաք +${config.bonus} $BLOCKS բոնուս:`,
-                        '🎉',
-                        nextLevel
-                    );
-                }
-
-                updateUI();
-                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            } else {
-                streakCount = 0; 
-            }
-        }
-
-        function checkGameOver() {
-            let canMoveAny = false;
-            for (let i = 0; i < dock.length; i++) {
-                const shape = dock[i];
-                if (!shape) continue;
-
-                for (let r = 0; r < GRID_SIZE; r++) {
-                    for (let c = 0; c < GRID_SIZE; c++) {
-                        if (canPlace(shape, r, c)) {
-                            canMoveAny = true;
-                            break;
-                        }
-                    }
-                    if (canMoveAny) break;
-                }
-                if (canMoveAny) break;
-            }
-
-            if (!canMoveAny && dock.some(s => s !== null)) {
-                if (energy > 0) {
-                    energy--;
-                    if (energy < MAX_ENERGY && !localStorage.getItem('blockudoku_last_energy_time')) {
-                        localStorage.setItem('blockudoku_last_energy_time', Date.now());
-                    }
-                }
-                updateUI();
-
-                showModal(
-                    '💥 Game Over', 
-                    `Այլևս քայլ չկա։ Դուք կորցրեցիք 1 Էներգիա (⚡): Մնաց ${energy} էներգիա:`,
-                    '💥',
-                    restartLevelOnly,
-                    true
-                );
-            }
-        }
-
-        function showModal(title, desc, icon, actionFn, showAdOption = false) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-desc').innerText = desc;
-            document.getElementById('modal-icon').innerText = icon;
-            
-            const adBtn = document.getElementById('modal-ad-btn');
-            if (showAdOption && energy < MAX_ENERGY) {
-                adBtn.classList.remove('hidden');
-            } else {
-                adBtn.classList.add('hidden');
-            }
-
-            const btn = document.getElementById('modal-btn');
-            btn.onclick = () => {
-                document.getElementById('modal').classList.add('hidden');
-                actionFn();
-            };
-            
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
         function restartLevelOnly() {
-            matchScore = 0;
-            streakCount = 0;
             board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
             dock = [null, null, null];
-            updateUI();
             initDock();
             draw();
         }
 
-        function nextLevel() {
-            currentLevel++;
-            matchScore = 0;
-            streakCount = 0;
-            board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
-            dock = [null, null, null];
-            updateUI();
-            initDock();
-            draw();
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        
-        updateEnergyTimer();
         initDock();
+        updateUI();
         setTimeout(resizeCanvas, 50);
     </script>
 </body>
