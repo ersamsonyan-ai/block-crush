@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blockudoku Telegram Mini App</title>
+    <title>Blockudoku Mini App - Phase 1</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -35,6 +35,7 @@
 </head>
 <body class="p-3 max-w-md mx-auto h-screen flex flex-col justify-between">
 
+    <!-- Header -->
     <header class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-3 shadow-lg">
         <div class="flex justify-between items-center mb-1">
             <div>
@@ -46,15 +47,22 @@
                 <p class="text-lg font-bold text-indigo-400" id="level-display">Level 1</p>
             </div>
         </div>
+        
+        <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
+            <span>Level Progress</span>
+            <span id="level-progress-text">0 / 30</span>
+        </div>
         <div class="w-full bg-slate-700/60 rounded-full h-2 overflow-hidden">
-            <div id="level-progress" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            <div id="level-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
         </div>
     </header>
 
+    <!-- Canvas Game Engine -->
     <main class="flex-1 flex items-center justify-center my-1 overflow-hidden">
         <canvas id="gameCanvas"></canvas>
     </main>
 
+    <!-- Navigation -->
     <nav class="grid grid-cols-4 gap-1 bg-slate-800/90 border border-slate-700/50 p-1.5 rounded-2xl">
         <button class="flex flex-col items-center p-1 text-amber-400">
             <i class="fa-solid fa-gamepad text-base"></i>
@@ -74,12 +82,13 @@
         </button>
     </nav>
 
-    <div id="modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <!-- Modal (Game Over / Level Up) -->
+    <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl text-center max-w-xs w-full shadow-2xl">
             <div class="text-4xl mb-2" id="modal-icon">🎮</div>
             <h2 id="modal-title" class="text-xl font-bold text-amber-400 mb-1">Game Over</h2>
             <p id="modal-desc" class="text-sm text-slate-300 mb-4">Այլևս քայլ չկա։</p>
-            <button id="modal-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl shadow-lg transition">Կրկին փորձել</button>
+            <button id="modal-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl shadow-lg transition">Շարունակել</button>
         </div>
     </div>
 
@@ -100,36 +109,81 @@
 
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         
-        // LocalStorage Data Retrieval (Պահպանված տվյալների վերականգնում)
-        let totalScore = parseInt(localStorage.getItem('blockudoku_score')) || 0;
-        let level = parseInt(localStorage.getItem('blockudoku_level')) || 1;
-        let levelGoal = level * 200;
+        // --- 20 Level Economics ---
+        const LEVEL_CONFIGS = [
+            { target: 30, bonus: 5 },   // L1
+            { target: 40, bonus: 5 },   // L2
+            { target: 50, bonus: 10 },  // L3
+            { target: 60, bonus: 10 },  // L4
+            { target: 75, bonus: 15 },  // L5
+            { target: 90, bonus: 15 },  // L6
+            { target: 105, bonus: 20 }, // L7
+            { target: 120, bonus: 20 }, // L8
+            { target: 135, bonus: 20 }, // L9
+            { target: 150, bonus: 25 }, // L10
+            { target: 165, bonus: 25 }, // L11
+            { target: 180, bonus: 25 }, // L12
+            { target: 195, bonus: 30 }, // L13
+            { target: 210, bonus: 30 }, // L14
+            { target: 225, bonus: 30 }, // L15
+            { target: 240, bonus: 35 }, // L16
+            { target: 255, bonus: 35 }, // L17
+            { target: 270, bonus: 35 }, // L18
+            { target: 285, bonus: 40 }, // L19
+            { target: 300, bonus: 50 }  // L20
+        ];
 
-        const SHAPES = [
+        // Shapes Pool by Difficulty
+        const SHAPES_EASY = [
+            [[1]], 
+            [[1, 1]], [[1], [1]], 
             [[1, 1], [1, 1]], 
-            [[1, 1, 1]], [[1], [1], [1]], 
+            [[1, 1, 1]], [[1], [1], [1]]
+        ];
+
+        const SHAPES_MEDIUM = [
+            ...SHAPES_EASY,
             [[1, 1, 1, 1]], [[1], [1], [1], [1]],
             [[1, 0], [1, 0], [1, 1]], [[0, 1], [0, 1], [1, 1]],
-            [[1, 1, 1], [0, 1, 0]], [[1, 1, 0], [0, 1, 1]]
+            [[1, 1, 1], [0, 1, 0]]
         ];
+
+        const SHAPES_HARD = [
+            ...SHAPES_MEDIUM,
+            [[1, 1, 1], [1, 1, 1], [1, 1, 1]], // 3x3 Big Block
+            [[1, 1, 0], [0, 1, 1]], [[0, 1, 1], [1, 1, 0]],
+            [[1, 1, 1], [1, 0, 0], [1, 0, 0]]
+        ];
+
+        let totalScore = parseInt(localStorage.getItem('blockudoku_score')) || 0;
+        let currentLevel = parseInt(localStorage.getItem('blockudoku_level')) || 1;
+        let matchScore = 0; // Current Level progress
 
         let dock = [null, null, null];
         let dragging = null;
 
-        function updateUI() {
-            document.getElementById('score').innerText = totalScore;
-            document.getElementById('level-display').innerText = `Level ${level}`;
-            
-            const prevGoal = (level - 1) * 200;
-            const currentProgress = totalScore - prevGoal;
-            const targetProgress = levelGoal - prevGoal;
-            const progressPct = Math.min(Math.max((currentProgress / targetProgress) * 100, 0), 100);
-            
-            document.getElementById('level-progress').style.width = `${progressPct}%`;
+        function getCurrentLevelConfig() {
+            const idx = Math.min(currentLevel - 1, LEVEL_CONFIGS.length - 1);
+            return LEVEL_CONFIGS[idx];
+        }
 
-            // Save state
+        function getShapePool() {
+            if (currentLevel <= 3) return SHAPES_EASY;
+            if (currentLevel <= 10) return SHAPES_MEDIUM;
+            return SHAPES_HARD;
+        }
+
+        function updateUI() {
+            const config = getCurrentLevelConfig();
+            document.getElementById('score').innerText = totalScore;
+            document.getElementById('level-display').innerText = `Level ${currentLevel}`;
+            
+            document.getElementById('level-progress-text').innerText = `${matchScore} / ${config.target}`;
+            const pct = Math.min((matchScore / config.target) * 100, 100);
+            document.getElementById('level-progress-bar').style.width = `${pct}%`;
+
             localStorage.setItem('blockudoku_score', totalScore);
-            localStorage.setItem('blockudoku_level', level);
+            localStorage.setItem('blockudoku_level', currentLevel);
         }
 
         function resizeCanvas() {
@@ -156,9 +210,10 @@
         }
 
         function initDock() {
+            const pool = getShapePool();
             for (let i = 0; i < 3; i++) {
                 if (!dock[i]) {
-                    dock[i] = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+                    dock[i] = pool[Math.floor(Math.random() * pool.length)];
                 }
             }
         }
@@ -378,12 +433,23 @@
 
             cleared = fullRows.length + fullCols.length;
             if (cleared > 0) {
-                totalScore += cleared * 20;
+                // Economics: 1 Line = 1 $BLOCK, Combo (2+) = 3 or 6 $BLOCKS
+                let gained = cleared === 1 ? 1 : (cleared === 2 ? 3 : 6);
                 
-                if (totalScore >= levelGoal) {
-                    level++;
-                    levelGoal = level * 200;
-                    if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                totalScore += gained;
+                matchScore += gained;
+                
+                const config = getCurrentLevelConfig();
+
+                if (matchScore >= config.target) {
+                    // Level Completed
+                    totalScore += config.bonus; // Level Up Bonus
+                    showModal(
+                        `🎉 Level ${currentLevel} Completed!`, 
+                        `Դուք հաջողությամբ անցաք մակարդակը և ստացաք +${config.bonus} $BLOCKS բոնուս:`,
+                        '🎉',
+                        nextLevel
+                    );
                 }
 
                 updateUI();
@@ -410,27 +476,44 @@
             }
 
             if (!canMoveAny && dock.some(s => s !== null)) {
-                showModal('Game Over', 'Այլևս քայլ չկա։ Ձեր հավաքած միավորները պահպանված են։');
+                showModal(
+                    '💥 Game Over', 
+                    `Այլևս քայլ չկա։ Ձեր հավաքած ${matchScore} $BLOCKS-ը պահպանվել է, բայց այս մակարդակի progress-ը զրոյանում է:`,
+                    '💥',
+                    restartLevelOnly
+                );
             }
         }
 
-        function showModal(title, desc) {
+        function showModal(title, desc, icon, actionFn) {
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-desc').innerText = desc;
+            document.getElementById('modal-icon').innerText = icon;
             
             const btn = document.getElementById('modal-btn');
-            btn.onclick = restartBoardOnly;
+            btn.onclick = () => {
+                document.getElementById('modal').classList.add('hidden');
+                actionFn();
+            };
             
             document.getElementById('modal').classList.remove('hidden');
         }
 
-        // Միայն խաղադաշտն է մաքրվում, միավորները ՄՆՈՒՄ ԵՆ
-        function restartBoardOnly() {
+        function restartLevelOnly() {
+            matchScore = 0;
             board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
             dock = [null, null, null];
-            
-            document.getElementById('modal').classList.add('hidden');
-            
+            updateUI();
+            initDock();
+            draw();
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            matchScore = 0;
+            board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
+            dock = [null, null, null];
+            updateUI();
             initDock();
             draw();
         }
