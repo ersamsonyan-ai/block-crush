@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blockudoku Mini App - Premium UX</title>
+    <title>Blockudoku Mini App - Premium Exchange</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -46,6 +46,11 @@
             backdrop-filter: blur(16px);
             border: 1px solid rgba(245, 158, 11, 0.25);
         }
+        .glass-card-blue {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
         .page-section {
             display: none;
             height: 100%;
@@ -56,7 +61,6 @@
             display: flex;
             flex-direction: column;
         }
-        /* Custom Scrollbar */
         .page-section::-webkit-scrollbar {
             width: 4px;
         }
@@ -70,7 +74,6 @@
 
     <!-- 1. GAMING PAGE SECTION -->
     <div id="page-game" class="page-section active flex-col justify-between h-full space-y-2">
-        <!-- Header -->
         <header class="glass-card rounded-3xl p-3.5 shadow-xl">
             <div class="flex justify-between items-center mb-2.5">
                 <div>
@@ -108,7 +111,6 @@
             </div>
         </header>
 
-        <!-- Canvas Game Engine -->
         <main class="flex-1 flex items-center justify-center my-auto overflow-hidden">
             <canvas id="gameCanvas"></canvas>
         </main>
@@ -122,7 +124,6 @@
         </div>
 
         <div class="space-y-2.5">
-            <!-- Task 1 -->
             <div class="glass-card p-3.5 rounded-3xl flex items-center justify-between border-slate-700/40 hover:border-slate-600/60 transition">
                 <div class="flex items-center gap-3.5">
                     <div class="w-11 h-11 bg-sky-500/15 border border-sky-500/30 text-sky-400 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-sky-500/10">
@@ -138,7 +139,6 @@
                 </button>
             </div>
 
-            <!-- Task 2 -->
             <div class="glass-card p-3.5 rounded-3xl flex items-center justify-between border-slate-700/40 hover:border-slate-600/60 transition">
                 <div class="flex items-center gap-3.5">
                     <div class="w-11 h-11 bg-slate-100/10 border border-slate-100/20 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg">
@@ -154,7 +154,6 @@
                 </button>
             </div>
 
-            <!-- Task 3 -->
             <div class="glass-card p-3.5 rounded-3xl flex items-center justify-between border-slate-700/40 hover:border-slate-600/60 transition">
                 <div class="flex items-center gap-3.5">
                     <div class="w-11 h-11 bg-red-500/15 border border-red-500/30 text-red-400 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-red-500/10">
@@ -179,7 +178,6 @@
             <p class="text-xs text-slate-400 mt-1">Ստացեք <b class="text-amber-400">+500 $BLOCKS</b> ամեն հրավիրված ընկերոջ համար</p>
         </div>
 
-        <!-- VIP Banner -->
         <div class="glass-card-gold p-4 rounded-3xl text-center space-y-3 relative overflow-hidden">
             <div class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 text-amber-400 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-lg shadow-amber-500/20">
                 <i class="fa-solid fa-users"></i>
@@ -201,7 +199,6 @@
             </div>
         </div>
 
-        <!-- Invited Friends List -->
         <div class="space-y-2">
             <p class="text-xs font-bold text-slate-400 px-1">Ընկերների Ցանկ</p>
             <div class="glass-card p-4 rounded-3xl text-center space-y-1">
@@ -210,44 +207,63 @@
         </div>
     </div>
 
-    <!-- 4. WALLET PAGE SECTION -->
-    <div id="page-wallet" class="page-section p-1 space-y-4">
-        <div class="text-center my-2">
-            <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400"> TON Wallet</h1>
-            <p class="text-xs text-slate-400 mt-1">Միացրեք ձեր քսակը ապագա Airdrop-ի համար</p>
+    <!-- 4. WALLET & EXCHANGE PAGE SECTION -->
+    <div id="page-wallet" class="page-section p-1 space-y-3">
+        <div class="text-center my-1">
+            <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400"> TON Swapper</h1>
+            <p class="text-xs text-slate-400 mt-0.5">Փոխանակեք $BLOCKS-ը <b>TON Crypto</b>-ի հետ</p>
         </div>
 
-        <div class="glass-card p-5 rounded-3xl text-center space-y-4 border-indigo-500/20">
-            <div class="w-16 h-16 bg-blue-500/15 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-xl shadow-blue-500/10">
+        <!-- Exchange Rate Info Header -->
+        <div class="glass-card p-2.5 rounded-2xl flex items-center justify-between text-xs border-amber-500/20">
+            <span class="text-slate-400 font-medium">Փոխարժեք (Rate):</span>
+            <span class="font-bold text-amber-400">100,000 $BLOCKS = 1.0 TON</span>
+        </div>
+
+        <!-- Swap Form Card -->
+        <div class="glass-card p-4 rounded-3xl space-y-3 relative border-indigo-500/30">
+            <!-- Input 1: Sell BLOCKS -->
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-1">
+                <div class="flex justify-between text-[11px] text-slate-400 font-bold">
+                    <span>Վաճառում եք</span>
+                    <span>Մնացորդ: <b class="text-amber-400"><span class="total-score-val">0</span></b></span>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <input id="swap-blocks-input" oninput="calculateSwap()" type="number" placeholder="0" class="bg-transparent text-xl font-black text-white outline-none w-full">
+                    <button onclick="setMaxSwap()" class="text-[10px] bg-amber-500/20 text-amber-400 font-bold px-2 py-1 rounded-lg hover:bg-amber-500/30">MAX</button>
+                    <span class="text-xs font-bold text-amber-400">$BLOCKS</span>
+                </div>
+            </div>
+
+            <!-- Swap Arrow Divider -->
+            <div class="flex justify-center -my-1">
+                <div class="w-8 h-8 bg-indigo-600 border border-indigo-400 rounded-full flex items-center justify-center text-white text-xs shadow-lg shadow-indigo-600/40">
+                    <i class="fa-solid fa-arrow-down shadow-inner"></i>
+                </div>
+            </div>
+
+            <!-- Input 2: Receive TON -->
+            <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-1">
+                <div class="flex justify-between text-[11px] text-slate-400 font-bold">
+                    <span>Ստանում եք</span>
+                    <span>TON Crypto</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <input id="swap-ton-output" type="text" readonly placeholder="0.00" class="bg-transparent text-xl font-black text-sky-400 outline-none w-full">
+                    <span class="text-xs font-bold text-sky-400">TON</span>
+                </div>
+            </div>
+
+            <!-- Connect / Exchange Button -->
+            <button id="wallet-connect-btn" onclick="connectWallet()" class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 active:scale-95 text-white font-black text-xs py-3.5 rounded-2xl shadow-xl shadow-indigo-600/25 transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-wallet"></i>
-            </div>
-
-            <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Հասանելի Մնացորդ</p>
-                <p class="text-3xl font-black text-amber-400 mt-1"><span class="total-score-val">0</span> <span class="text-xs text-amber-300 font-bold">$BLOCKS</span></p>
-            </div>
-
-            <button onclick="connectWallet()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-95 text-white font-bold text-xs py-3.5 rounded-2xl shadow-xl shadow-indigo-600/25 transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-link"></i>
                 <span id="wallet-btn-text">Connect TON Wallet</span>
             </button>
-        </div>
-
-        <!-- Recent Activity Mock -->
-        <div class="space-y-2">
-            <p class="text-xs font-bold text-slate-400 px-1">Գործարքների Պատմություն</p>
-            <div class="glass-card p-3.5 rounded-3xl flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 bg-emerald-500/15 text-emerald-400 rounded-xl flex items-center justify-center text-sm">
-                        <i class="fa-solid fa-arrow-down"></i>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-slate-200">Welcome Bonus</p>
-                        <p class="text-[10px] text-slate-400">Սկզբնական բոնուս</p>
-                    </div>
-                </div>
-                <span class="text-xs font-black text-emerald-400">+50 $BLOCKS</span>
-            </div>
+            
+            <button id="swap-execute-btn" onclick="executeSwap()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 font-black text-xs py-3.5 rounded-2xl shadow-xl shadow-emerald-500/25 transition hidden">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Փոխանակել TON-ի</span>
+            </button>
         </div>
     </div>
 
@@ -291,6 +307,8 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.expand(); tg.ready(); }
 
+        let isWalletConnected = false;
+
         // --- TAB SWITCHER LOGIC ---
         function switchTab(tabName) {
             document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
@@ -305,6 +323,45 @@
             activeNav.classList.add('text-amber-400', 'bg-slate-800/60');
 
             if (tabName === 'game') setTimeout(resizeCanvas, 50);
+        }
+
+        // --- SWAP CALCULATOR LOGIC ---
+        const RATE = 100000; // 100,000 BLOCKS = 1 TON
+
+        function calculateSwap() {
+            const inputVal = parseFloat(document.getElementById('swap-blocks-input').value) || 0;
+            const tonVal = (inputVal / RATE).toFixed(3);
+            document.getElementById('swap-ton-output').value = tonVal;
+        }
+
+        function setMaxSwap() {
+            document.getElementById('swap-blocks-input').value = totalScore;
+            calculateSwap();
+        }
+
+        function connectWallet() {
+            isWalletConnected = true;
+            document.getElementById('wallet-connect-btn').classList.add('hidden');
+            document.getElementById('swap-execute-btn').classList.remove('hidden');
+            alert("TON Wallet-ը (EQD...x89) միացված է:");
+        }
+
+        function executeSwap() {
+            const inputVal = parseFloat(document.getElementById('swap-blocks-input').value) || 0;
+            
+            if (inputVal < 1000) {
+                return alert("Նվազագույն փոխանակումը 1,000 $BLOCKS է:");
+            }
+            if (inputVal > totalScore) {
+                return alert("Անբավարար $BLOCKS մնացորդ:");
+            }
+
+            totalScore -= inputVal;
+            updateUI();
+            document.getElementById('swap-blocks-input').value = '';
+            document.getElementById('swap-ton-output').value = '0.00';
+            
+            alert(`✅ Հաջողությամբ փոխանակվեց ${inputVal} $BLOCKS-ը ${(inputVal / RATE).toFixed(3)} TON-ի հետ:`);
         }
 
         // --- REFERRAL & TASKS LOGIC ---
@@ -346,12 +403,6 @@
             }, 3000);
         }
 
-        function connectWallet() {
-            const walletBtn = document.getElementById('wallet-btn-text');
-            walletBtn.innerText = "Միացված է (EQD...x89)";
-            alert("TON Wallet-ը հաջողությամբ միացվեց:");
-        }
-
         // --- GAME ENGINE ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -365,7 +416,6 @@
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         let totalScore = parseInt(localStorage.getItem('blockudoku_score')) || 0;
         let currentLevel = parseInt(localStorage.getItem('blockudoku_level')) || 1;
-        let matchScore = 0;
         let dock = [null, null, null], dragging = null;
 
         const SHAPES_EASY = [[[1]], [[1, 1]], [[1], [1]], [[1, 1], [1, 1]]];
