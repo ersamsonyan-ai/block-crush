@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blockudoku Mini App - Fixed NaN Energy</title>
+    <title>Blockudoku Mini App - Energy & Ad Reward</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -43,13 +43,21 @@
                 <p class="text-xl font-black text-amber-400"><span id="score">0</span></p>
             </div>
             
-            <!-- Energy Badge -->
-            <div class="flex flex-col items-center justify-center bg-slate-900/80 px-3 py-1 rounded-xl border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
-                <div class="flex items-center gap-1.5">
-                    <i class="fa-solid fa-bolt text-amber-400 text-xs animate-pulse"></i>
-                    <span id="energy-text" class="text-xs font-black tracking-wide text-amber-300">5 / 5</span>
+            <!-- Energy Badge & Ad Button -->
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col items-center justify-center bg-slate-900/80 px-3 py-1 rounded-xl border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt text-amber-400 text-xs animate-pulse"></i>
+                        <span id="energy-text" class="text-xs font-black tracking-wide text-amber-300">5 / 5</span>
+                    </div>
+                    <span id="energy-timer" class="text-[8px] font-bold text-slate-400">FULL</span>
                 </div>
-                <span class="text-[8px] font-medium text-slate-400 uppercase tracking-wider">Էներգիա</span>
+
+                <!-- Watch Ad Button -->
+                <button id="add-energy-ad-btn" onclick="watchAdForEnergy()" class="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-[10px] px-2.5 py-2 rounded-xl flex items-center gap-1 shadow-md transition">
+                    <i class="fa-solid fa-play text-[9px]"></i>
+                    <span>+1 ⚡</span>
+                </button>
             </div>
 
             <div class="text-right">
@@ -92,13 +100,19 @@
         </button>
     </nav>
 
-    <!-- Modal -->
+    <!-- Game Over / Alert Modal -->
     <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl text-center max-w-xs w-full shadow-2xl">
             <div class="text-4xl mb-2" id="modal-icon">🎮</div>
             <h2 id="modal-title" class="text-xl font-bold text-amber-400 mb-1">Game Over</h2>
             <p id="modal-desc" class="text-sm text-slate-300 mb-4">Այլևս քայլ չկա։</p>
-            <button id="modal-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl shadow-lg transition">Շարունակել</button>
+            
+            <div class="flex flex-col gap-2">
+                <button id="modal-ad-btn" onclick="watchAdForEnergy(true)" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 hidden">
+                    <i class="fa-solid fa-play"></i> Դիտել Գովազդ (+1 ⚡)
+                </button>
+                <button id="modal-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl shadow-lg transition">Շարունակել</button>
+            </div>
         </div>
     </div>
 
@@ -116,6 +130,19 @@
         let dockY = 0;
         
         const TOUCH_OFFSET_Y = 60; 
+
+        // --- ENERGY SYSTEM ---
+        const MAX_ENERGY = 5;
+        const RECHARGE_TIME = 30 * 60; // 30 minutes in seconds
+
+        let energy = parseInt(localStorage.getItem('blockudoku_energy'));
+        if (isNaN(energy)) energy = MAX_ENERGY;
+
+        let lastEnergyTime = parseInt(localStorage.getItem('blockudoku_last_energy_time'));
+        if (isNaN(lastEnergyTime)) {
+            lastEnergyTime = Date.now();
+            localStorage.setItem('blockudoku_last_energy_time', lastEnergyTime);
+        }
 
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         
@@ -155,15 +182,11 @@
             [[1, 1, 1, 1, 1]], [[1], [1], [1], [1], [1]]
         ];
 
-        // Safe LocalStorage Retrieval (Prevents NaN bug)
         let totalScore = parseInt(localStorage.getItem('blockudoku_score'));
         if (isNaN(totalScore)) totalScore = 0;
 
         let currentLevel = parseInt(localStorage.getItem('blockudoku_level'));
         if (isNaN(currentLevel) || currentLevel < 1) currentLevel = 1;
-
-        let energy = parseInt(localStorage.getItem('blockudoku_energy'));
-        if (isNaN(energy)) energy = 5; // Automatic Fix for NaN
 
         let matchScore = 0; 
         let floatingTexts = [];
@@ -183,15 +206,66 @@
             return SHAPES_HARD;
         }
 
+        // --- Energy Recharge Logic ---
+        function updateEnergyTimer() {
+            const now = Date.now();
+            if (energy < MAX_ENERGY) {
+                const elapsedSeconds = Math.floor((now - lastEnergyTime) / 1000);
+                const restored = Math.floor(elapsedSeconds / RECHARGE_TIME);
+
+                if (restored > 0) {
+                    energy = Math.min(MAX_ENERGY, energy + restored);
+                    lastEnergyTime = now - ((elapsedSeconds % RECHARGE_TIME) * 1000);
+                    localStorage.setItem('blockudoku_last_energy_time', lastEnergyTime);
+                }
+
+                if (energy < MAX_ENERGY) {
+                    const remainingSeconds = RECHARGE_TIME - (Math.floor((now - lastEnergyTime) / 1000) % RECHARGE_TIME);
+                    const mins = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
+                    const secs = (remainingSeconds % 60).toString().padStart(2, '0');
+                    document.getElementById('energy-timer').innerText = `${mins}:${secs}`;
+                } else {
+                    document.getElementById('energy-timer').innerText = 'FULL';
+                }
+            } else {
+                document.getElementById('energy-timer').innerText = 'FULL';
+                lastEnergyTime = now;
+                localStorage.setItem('blockudoku_last_energy_time', lastEnergyTime);
+            }
+
+            updateUI();
+        }
+
+        setInterval(updateEnergyTimer, 1000);
+
+        function watchAdForEnergy(fromModal = false) {
+            if (energy >= MAX_ENERGY) {
+                alert('Ձեր էներգիան արդեն առավելագույն է (5/5):');
+                return;
+            }
+
+            grantAdReward(fromModal);
+        }
+
+        function grantAdReward(fromModal) {
+            energy = Math.min(MAX_ENERGY, energy + 1);
+            updateUI();
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+
+            if (fromModal) {
+                document.getElementById('modal').classList.add('hidden');
+                restartLevelOnly();
+            }
+        }
+
         function updateUI() {
-            // Check NaN just in case
-            if (isNaN(energy)) energy = 5;
+            if (isNaN(energy)) energy = MAX_ENERGY;
             if (isNaN(totalScore)) totalScore = 0;
 
             const config = getCurrentLevelConfig();
             document.getElementById('score').innerText = totalScore;
             document.getElementById('level-display').innerText = `Level ${currentLevel}`;
-            document.getElementById('energy-text').innerText = `${energy} / 5`;
+            document.getElementById('energy-text').innerText = `${energy} / ${MAX_ENERGY}`;
             
             document.getElementById('level-progress-text').innerText = `${matchScore} / ${config.target}`;
             const pct = Math.min((matchScore / config.target) * 100, 100);
@@ -378,7 +452,7 @@
 
         canvas.addEventListener('pointerdown', (e) => {
             if (energy <= 0) {
-                showModal('⚡ Էներգիան սպառվել է', 'Դուք սպառել եք ձեր 5 էներգիան։ Սպասեք էներգիայի վերականգնմանը:', '⚡', () => {});
+                showModal('⚡ Էներգիան սպառվել է', 'Դուք սպառել եք ձեր էներգիան։ Դիտեք գովազդ՝ 1 ⚡ ստանալու համար կամ սպասեք 30 րոպե:', '⚡', () => {}, true);
                 return;
             }
 
@@ -486,7 +560,7 @@
             if (cleared > 0) {
                 streakCount++;
                 let gained = cleared === 1 ? 1 : (cleared === 2 ? 2 : 4);
-                
+
                 if (streakCount > 1) {
                     gained += 1;
                     addFloatingText(`STREAK x${streakCount}! 🔥`, '#f59e0b', 22);
@@ -494,7 +568,7 @@
                     const comboName = cleared === 2 ? 'DOUBLE COMBO! 🔥' : 'TRIPLE COMBO! ⚡';
                     addFloatingText(comboName, '#38bdf8', 24);
                 } else {
-                    addFloatingText('+1 $BLOCK', '#818cf8', 18);
+                    addFloatingText(`+${gained} $BLOCK`, '#818cf8', 18);
                 }
 
                 totalScore += gained;
@@ -540,6 +614,9 @@
             if (!canMoveAny && dock.some(s => s !== null)) {
                 if (energy > 0) {
                     energy--;
+                    if (energy < MAX_ENERGY && !localStorage.getItem('blockudoku_last_energy_time')) {
+                        localStorage.setItem('blockudoku_last_energy_time', Date.now());
+                    }
                 }
                 updateUI();
 
@@ -547,16 +624,24 @@
                     '💥 Game Over', 
                     `Այլևս քայլ չկա։ Դուք կորցրեցիք 1 Էներգիա (⚡): Մնաց ${energy} էներգիա:`,
                     '💥',
-                    restartLevelOnly
+                    restartLevelOnly,
+                    true
                 );
             }
         }
 
-        function showModal(title, desc, icon, actionFn) {
+        function showModal(title, desc, icon, actionFn, showAdOption = false) {
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-desc').innerText = desc;
             document.getElementById('modal-icon').innerText = icon;
             
+            const adBtn = document.getElementById('modal-ad-btn');
+            if (showAdOption && energy < MAX_ENERGY) {
+                adBtn.classList.remove('hidden');
+            } else {
+                adBtn.classList.add('hidden');
+            }
+
             const btn = document.getElementById('modal-btn');
             btn.onclick = () => {
                 document.getElementById('modal').classList.add('hidden');
@@ -589,7 +674,7 @@
 
         window.addEventListener('resize', resizeCanvas);
         
-        updateUI();
+        updateEnergyTimer();
         initDock();
         setTimeout(resizeCanvas, 50);
     </script>
