@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Block Puzzle - Premium Mechanics</title>
+    <title>3D Block Puzzle - Fixed Mechanics</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        
         body {
-            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
             color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -19,127 +20,126 @@
         }
 
         .game-header {
-            display: flex;
-            gap: 40px;
-            margin-bottom: 20px;
-            font-size: 22px;
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(0,255,204,0.5);
+            margin-bottom: 25px;
+            font-size: 26px;
+            font-weight: 800;
         }
 
         .score-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px 25px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: rgba(255, 255, 255, 0.07);
+            padding: 12px 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.2);
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 30px;
+            gap: 35px;
         }
 
-        /* 8x8 Grid Styles */
+        /* 8x8 Board Grid */
         .board {
             display: grid;
-            grid-template-columns: repeat(8, 45px);
-            grid-template-rows: repeat(8, 45px);
+            grid-template-columns: repeat(8, 48px);
+            grid-template-rows: repeat(8, 48px);
             gap: 6px;
-            padding: 12px;
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 20px;
-            border: 2px solid rgba(0, 255, 204, 0.3);
-            box-shadow: 0 0 30px rgba(0, 255, 204, 0.15), inset 0 0 15px rgba(0,0,0,0.8);
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 24px;
+            border: 2px solid rgba(0, 242, 254, 0.4);
+            box-shadow: 0 0 40px rgba(0, 242, 254, 0.25), inset 0 0 20px rgba(0,0,0,0.9);
             position: relative;
         }
 
         .cell {
-            width: 45px;
-            height: 45px;
+            width: 48px;
+            height: 48px;
             background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
+            border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: background 0.15s, border-color 0.15s, transform 0.15s;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
         }
 
+        /* Ghost Highlight on Drag */
         .cell.highlight {
-            background: rgba(0, 255, 204, 0.35) !important;
-            border-color: #00ffcc !important;
-            box-shadow: 0 0 12px #00ffcc;
+            background: rgba(0, 242, 254, 0.4) !important;
+            border-color: #00f2fe !important;
+            box-shadow: 0 0 15px #00f2fe, inset 0 0 8px #00f2fe !important;
         }
 
+        /* Placed Block Styling */
         .cell.filled {
-            background: linear-gradient(135deg, #ff007f, #7928ca);
-            border: 1px solid #ff77e9;
-            box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4), inset 0 2px 4px rgba(255,255,255,0.4);
-            border-radius: 8px;
+            background: linear-gradient(135deg, #ff007f 0%, #7928ca 100%);
+            border: 1px solid #ff99e6;
+            box-shadow: 0 4px 15px rgba(255, 0, 127, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
         }
 
         /* Shape Spawn Zone */
         .shapes-container {
             display: flex;
-            gap: 25px;
+            gap: 20px;
             justify-content: center;
             align-items: center;
-            min-height: 120px;
+            min-height: 130px;
             width: 100%;
         }
 
         .shape-slot {
-            width: 110px;
-            height: 110px;
+            width: 120px;
+            height: 120px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: rgba(255, 255, 255, 0.02);
-            border-radius: 15px;
-            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border: 1px dashed rgba(255, 255, 255, 0.12);
         }
 
         .shape {
             display: grid;
-            gap: 3px;
+            gap: 4px;
             cursor: grab;
             touch-action: none;
-            transition: transform 0.1s ease;
-        }
-
-        .shape:active {
-            cursor: grabbing;
         }
 
         .shape-block {
-            width: 25px;
-            height: 25px;
-            background: linear-gradient(135deg, #00f2fe, #4facfe);
-            border-radius: 5px;
-            border: 1px solid #a6c1ee;
-            box-shadow: 0 2px 8px rgba(79, 172, 254, 0.5), inset 0 1px 2px rgba(255,255,255,0.6);
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            border-radius: 6px;
+            border: 1px solid #d4f7ff;
+            box-shadow: 0 3px 10px rgba(0, 242, 254, 0.5), inset 0 2px 3px rgba(255,255,255,0.8);
         }
 
+        /* Dragging State */
         .dragging {
             position: fixed !important;
             pointer-events: none;
             z-index: 1000;
-            transform: scale(1.15);
+            margin: 0 !important;
+            transform: scale(1.05);
         }
 
         .dragging .shape-block {
-            width: 45px;
-            height: 45px;
+            width: 48px;
+            height: 48px;
             gap: 6px;
-            box-shadow: 0 10px 25px rgba(0, 242, 254, 0.6);
+            box-shadow: 0 12px 30px rgba(0, 242, 254, 0.8), inset 0 2px 4px rgba(255,255,255,0.9);
         }
     </style>
 </head>
 <body>
 
     <div class="game-header">
-        <div class="score-box">Միավոր: <span id="score">0</span></div>
+        <div class="score-box">ՄԻԱՎՈՐ: <span id="score">0</span></div>
     </div>
 
     <div class="game-container">
@@ -149,7 +149,7 @@
 
     <script>
         const BOARD_SIZE = 8;
-        const CELL_SIZE = 45;
+        const CELL_SIZE = 48;
         const CELL_GAP = 6;
         const boardElement = document.getElementById('board');
         const scoreElement = document.getElementById('score');
@@ -169,7 +169,6 @@
             [[1, 1, 1, 1]]
         ];
 
-        // Initialize Board
         function initBoard() {
             boardElement.innerHTML = '';
             for (let r = 0; r < BOARD_SIZE; r++) {
@@ -183,7 +182,6 @@
             }
         }
 
-        // Spawn 3 shapes
         function spawnShapes() {
             shapesContainer.innerHTML = '';
             for (let i = 0; i < 3; i++) {
@@ -202,7 +200,7 @@
         function createShapeElement(matrix) {
             const shape = document.createElement('div');
             shape.classList.add('shape');
-            shape.style.gridTemplateColumns = `repeat(${matrix[0].length}, 25px)`;
+            shape.style.gridTemplateColumns = `repeat(${matrix[0].length}, 26px)`;
             
             matrix.forEach(row => {
                 row.forEach(val => {
@@ -215,10 +213,7 @@
             return shape;
         }
 
-        // Drag & Snap Logic
         function makeDraggable(element, matrix) {
-            let offsetR, offsetC;
-
             const onPointerDown = (e) => {
                 element.classList.add('dragging');
                 moveAt(e.clientX, e.clientY);
@@ -228,8 +223,11 @@
             };
 
             const moveAt = (clientX, clientY) => {
-                element.style.left = clientX - (matrix[0].length * CELL_SIZE) / 2 + 'px';
-                element.style.top = clientY - (matrix.length * CELL_SIZE) / 2 + 'px';
+                const width = matrix[0].length * CELL_SIZE + (matrix[0].length - 1) * CELL_GAP;
+                const height = matrix.length * CELL_SIZE + (matrix.length - 1) * CELL_GAP;
+                
+                element.style.left = (clientX - width / 2) + 'px';
+                element.style.top = (clientY - height / 2) + 'px';
 
                 clearHighlights();
                 const target = getGridTarget(clientX, clientY, matrix);
@@ -244,20 +242,20 @@
                 document.removeEventListener('pointermove', onPointerMove);
                 document.removeEventListener('pointerup', onPointerUp);
 
-                element.classList.remove('dragging');
-                element.style.left = '';
-                element.style.top = '';
-
                 const target = getGridTarget(e.clientX, e.clientY, matrix);
                 
-                // SNAP Logic: If valid place found, snap automatically
                 if (target && canPlace(matrix, target.r, target.c)) {
                     placeShape(matrix, target.r, target.c);
-                    element.parentElement.innerHTML = ''; // Remove from slot
+                    element.parentElement.innerHTML = ''; // Clear slot
                     checkAndClearLines();
                     if (shapesContainer.querySelectorAll('.shape').length === 0) {
                         spawnShapes();
                     }
+                } else {
+                    // Reset to original position
+                    element.classList.remove('dragging');
+                    element.style.left = '';
+                    element.style.top = '';
                 }
                 clearHighlights();
             };
@@ -265,16 +263,23 @@
             element.addEventListener('pointerdown', onPointerDown);
         }
 
-        // Get nearest Grid coordinates
         function getGridTarget(clientX, clientY, matrix) {
             const rect = boardElement.getBoundingClientRect();
-            const relX = clientX - rect.left - (CELL_GAP / 2);
-            const relY = clientY - rect.top - (CELL_GAP / 2);
+            
+            const shapeWidth = matrix[0].length * CELL_SIZE + (matrix[0].length - 1) * CELL_GAP;
+            const shapeHeight = matrix.length * CELL_SIZE + (matrix.length - 1) * CELL_GAP;
 
-            const col = Math.floor(relX / (CELL_SIZE + CELL_GAP));
-            const row = Math.floor(relY / (CELL_SIZE + CELL_GAP));
+            const shapeLeft = clientX - shapeWidth / 2;
+            const shapeTop = clientY - shapeHeight / 2;
 
-            if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) {
+            const relX = shapeLeft - rect.left - 14; 
+            const relY = shapeTop - rect.top - 14;   
+
+            const col = Math.round(relX / (CELL_SIZE + CELL_GAP));
+            const row = Math.round(relY / (CELL_SIZE + CELL_GAP));
+
+            if (row >= 0 && row <= BOARD_SIZE - matrix.length &&
+                col >= 0 && col <= BOARD_SIZE - matrix[0].length) {
                 return { r: row, c: col };
             }
             return null;
@@ -332,16 +337,13 @@
             let linesToClearR = [];
             let linesToClearC = [];
 
-            // Rows
             for (let r = 0; r < BOARD_SIZE; r++) {
                 if (grid[r].every(val => val === 1)) linesToClearR.push(r);
             }
-            // Cols
             for (let c = 0; c < BOARD_SIZE; c++) {
                 if (grid.every(row => row[c] === 1)) linesToClearC.push(c);
             }
 
-            // Clear
             linesToClearR.forEach(r => {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     grid[r][c] = 0;
