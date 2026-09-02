@@ -42,7 +42,7 @@
             aspect-ratio: 1;
             background: #334155;
             border-radius: 6px;
-            transition: background-color 0.15s ease;
+            transition: background-color 0.1s ease;
         }
 
         .cell.filled {
@@ -52,7 +52,8 @@
         }
 
         .cell.hover {
-            background: rgba(56, 189, 248, 0.5) !important;
+            background: rgba(56, 189, 248, 0.6) !important;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
         }
 
         .shape-container {
@@ -85,7 +86,8 @@
             position: fixed !important;
             pointer-events: none !important;
             z-index: 1000 !important;
-            transform: translate(-50%, -50%) scale(1.1) !important;
+            /* Ֆիգուրը 25px բարձրացված է մատից, որպեսզի տեսանելի լինի տախտակը */
+            transform: translate(-50%, calc(-50% - 25px)) scale(1.1) !important;
             opacity: 0.9;
         }
 
@@ -240,7 +242,6 @@
         let levelStartScore = 0;
         let levelGoal = 200; 
 
-        // Բարդացված ֆիգուրների ցանկ
         const SHAPES = [
             [[1, 1], [1, 1]],                    // 2x2 Square
             [[1, 1, 1], [1, 1, 1], [1, 1, 1]],    // 3x3 Big Square
@@ -248,8 +249,8 @@
             [[1], [1], [1]],                      // 3 Line Vertical
             [[1, 1, 1, 1]],                       // 4 Line Horizontal
             [[1], [1], [1], [1]],                 // 4 Line Vertical
-            [[1, 1, 1, 1, 1]],                    // 5 Line Horizontal (Hard)
-            [[1], [1], [1], [1], [1]],            // 5 Line Vertical (Hard)
+            [[1, 1, 1, 1, 1]],                    // 5 Line Horizontal
+            [[1], [1], [1], [1], [1]],            // 5 Line Vertical
             [[1, 0], [1, 0], [1, 1]],             // L Shape 1
             [[0, 1], [0, 1], [1, 1]],             // L Shape 2
             [[1, 1, 1], [1, 0, 0]],               // L Big 1
@@ -376,15 +377,16 @@
             activeDragElement.style.left = `${clientX}px`;
             activeDragElement.style.top = `${clientY}px`;
 
-            highlightGridHover(clientX, clientY);
+            // Հաշվի առնելով, որ ֆիգուրը 25px վերև է բարձրացված
+            highlightGridHover(clientX, clientY - 25);
         }
 
         function highlightGridHover(x, y) {
             clearHover();
-            const targetCell = getCellFromPoint(x, y);
-            if (targetCell && activeShapeData) {
-                const r = parseInt(targetCell.dataset.r);
-                const c = parseInt(targetCell.dataset.c);
+            const bestCell = getClosestCell(x, y);
+            if (bestCell && activeShapeData) {
+                const r = parseInt(bestCell.dataset.r);
+                const c = parseInt(bestCell.dataset.c);
                 if (canPlace(activeShapeData, r, c)) {
                     for (let sr = 0; sr < activeShapeData.length; sr++) {
                         for (let sc = 0; sc < activeShapeData[sr].length; sc++) {
@@ -402,9 +404,25 @@
             document.querySelectorAll('.cell.hover').forEach(c => c.classList.remove('hover'));
         }
 
-        function getCellFromPoint(x, y) {
-            const elements = document.elementsFromPoint(x, y);
-            return elements.find(el => el.classList && el.classList.contains('cell'));
+        // Գտնում է մատին ամենամոտ վանդակը (անգամ եթե մատը մի փոքր կողք է)
+        function getClosestCell(x, y) {
+            const cells = document.querySelectorAll('.cell');
+            let closestCell = null;
+            let minDistance = 50; // Մեծացված շառավիղ հեշտ տեղադրման համար
+
+            cells.forEach(cell => {
+                const rect = cell.getBoundingClientRect();
+                const cellCenterX = rect.left + rect.width / 2;
+                const cellCenterY = rect.top + rect.height / 2;
+                
+                const distance = Math.hypot(x - cellCenterX, y - cellCenterY);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestCell = cell;
+                }
+            });
+
+            return closestCell;
         }
 
         function onDragEnd(e, moveHandler, endHandler, originalContainer) {
@@ -416,7 +434,8 @@
             const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
             const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
 
-            const targetCell = getCellFromPoint(clientX, clientY);
+            // Հաշվի առնելով 25px վերևի շեղումը
+            const targetCell = getClosestCell(clientX, clientY - 25);
             let placed = false;
 
             if (targetCell && activeShapeData) {
@@ -503,7 +522,6 @@
 
             const totalCleared = fullRows.length + fullCols.length;
             if (totalCleared > 0) {
-                // 1 գիծ = 20, 2 գիծ = 60, 3+ գիծ = 120+ $BLOCKS
                 const bonus = totalCleared * 20 * totalCleared; 
                 addScore(bonus);
                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
