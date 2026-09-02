@@ -15,10 +15,10 @@
         * {
             box-sizing: border-box;
             touch-action: none;
-        }
-        body {
             user-select: none;
             -webkit-user-select: none;
+        }
+        body {
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -35,7 +35,14 @@
             padding: 8px;
             border-radius: 16px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        /* Քաշելու ընթացքում տախտակի թեթևակի լուսավորում (առանց հուշելու վանդակները) */
+        .grid-board.active-hover {
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
         }
 
         .cell {
@@ -49,11 +56,6 @@
             background: linear-gradient(135deg, #3b82f6, #6366f1);
             box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .cell.hover {
-            background: rgba(56, 189, 248, 0.6) !important;
-            box-shadow: 0 0 8px rgba(56, 189, 248, 0.8);
         }
 
         .shape-container {
@@ -82,13 +84,14 @@
             border-radius: 3px;
         }
 
+        /* Dragging element-ի ձևավորում (մատից 60px վերև) */
         .dragging {
             position: fixed !important;
             pointer-events: none !important;
             z-index: 1000 !important;
-            /* Ֆիգուրը 25px բարձրացված է մատից, որպեսզի տեսանելի լինի տախտակը */
-            transform: translate(-50%, calc(-50% - 25px)) scale(1.1) !important;
-            opacity: 0.9;
+            transform: translate(-50%, calc(-50% - 60px)) scale(1.15) !important;
+            opacity: 0.95;
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.6));
         }
 
         .progress-bar {
@@ -128,7 +131,7 @@
     <!-- TAB 1: GAME SECTION -->
     <div id="tab-game" class="tab-content flex-1 flex flex-col justify-between my-1">
         <div class="text-center my-1 text-xs text-slate-300 font-medium bg-slate-800/50 py-1 px-3 rounded-lg border border-slate-700/30">
-            💥 Մաքրեք գծերը միավորներ ստանալու համար
+            🖐️ Քաշեք ֆիգուրը դեպի տախտակը
         </div>
 
         <!-- Main Game Board -->
@@ -352,7 +355,8 @@
             activeDragElement.classList.add('dragging');
             document.body.appendChild(activeDragElement);
 
-            container.style.opacity = '0.3';
+            container.style.opacity = '0.2';
+            document.getElementById('board').classList.add('active-hover');
 
             if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
@@ -376,45 +380,26 @@
 
             activeDragElement.style.left = `${clientX}px`;
             activeDragElement.style.top = `${clientY}px`;
-
-            // Հաշվի առնելով, որ ֆիգուրը 25px վերև է բարձրացված
-            highlightGridHover(clientX, clientY - 25);
         }
 
-        function highlightGridHover(x, y) {
-            clearHover();
-            const bestCell = getClosestCell(x, y);
-            if (bestCell && activeShapeData) {
-                const r = parseInt(bestCell.dataset.r);
-                const c = parseInt(bestCell.dataset.c);
-                if (canPlace(activeShapeData, r, c)) {
-                    for (let sr = 0; sr < activeShapeData.length; sr++) {
-                        for (let sc = 0; sc < activeShapeData[sr].length; sc++) {
-                            if (activeShapeData[sr][sc]) {
-                                const cell = document.querySelector(`.cell[data-r="${r + sr}"][data-c="${c + sc}"]`);
-                                if (cell) cell.classList.add('hover');
-                            }
-                        }
-                    }
-                }
+        function getTargetBoardCell(x, y) {
+            const board = document.getElementById('board');
+            const boardRect = board.getBoundingClientRect();
+
+            if (x < boardRect.left - 30 || x > boardRect.right + 30 ||
+                y < boardRect.top - 30 || y > boardRect.bottom + 30) {
+                return null;
             }
-        }
 
-        function clearHover() {
-            document.querySelectorAll('.cell.hover').forEach(c => c.classList.remove('hover'));
-        }
-
-        // Գտնում է մատին ամենամոտ վանդակը (անգամ եթե մատը մի փոքր կողք է)
-        function getClosestCell(x, y) {
             const cells = document.querySelectorAll('.cell');
             let closestCell = null;
-            let minDistance = 50; // Մեծացված շառավիղ հեշտ տեղադրման համար
+            let minDistance = 60;
 
             cells.forEach(cell => {
                 const rect = cell.getBoundingClientRect();
                 const cellCenterX = rect.left + rect.width / 2;
                 const cellCenterY = rect.top + rect.height / 2;
-                
+
                 const distance = Math.hypot(x - cellCenterX, y - cellCenterY);
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -431,11 +416,13 @@
             document.removeEventListener('mousemove', moveHandler);
             document.removeEventListener('mouseup', endHandler);
 
+            document.getElementById('board').classList.remove('active-hover');
+
             const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
             const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
 
-            // Հաշվի առնելով 25px վերևի շեղումը
-            const targetCell = getClosestCell(clientX, clientY - 25);
+            // 60px բարձրացում մատից
+            const targetCell = getTargetBoardCell(clientX, clientY - 60);
             let placed = false;
 
             if (targetCell && activeShapeData) {
@@ -457,8 +444,6 @@
                 activeDragElement.remove();
                 activeDragElement = null;
             }
-
-            clearHover();
 
             const remainingShapes = dockShapesData.filter(s => s !== null);
             if (remainingShapes.length === 0) {
