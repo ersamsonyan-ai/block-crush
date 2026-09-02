@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blockudoku Mini App - Full Navigation</title>
+    <title>Blockudoku Mini App - Premium UX</title>
     
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,9 +17,12 @@
             -webkit-user-select: none;
         }
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #090d16;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.12) 0px, transparent 50%);
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
             overflow: hidden;
             height: 100vh;
             margin: 0;
@@ -32,6 +35,17 @@
             margin: 0 auto;
             touch-action: none;
         }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card-gold {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.6) 100%);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
         .page-section {
             display: none;
             height: 100%;
@@ -42,20 +56,30 @@
             display: flex;
             flex-direction: column;
         }
+        /* Custom Scrollbar */
+        .page-section::-webkit-scrollbar {
+            width: 4px;
+        }
+        .page-section::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body class="p-3 max-w-md mx-auto h-screen flex flex-col justify-between">
 
-    <div id="page-game" class="page-section active flex-col justify-between h-full">
-        <header class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-3 shadow-lg">
-            <div class="flex justify-between items-center mb-2">
+    <!-- 1. GAMING PAGE SECTION -->
+    <div id="page-game" class="page-section active flex-col justify-between h-full space-y-2">
+        <!-- Header -->
+        <header class="glass-card rounded-3xl p-3.5 shadow-xl">
+            <div class="flex justify-between items-center mb-2.5">
                 <div>
-                    <p class="text-[10px] text-slate-400 font-medium">Ընդհանուր $BLOCKS</p>
-                    <p class="text-xl font-black text-amber-400"><span class="total-score-val">0</span></p>
+                    <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Ընդհանուր $BLOCKS</p>
+                    <p class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500"><span class="total-score-val">0</span></p>
                 </div>
                 
                 <div class="flex items-center gap-2">
-                    <div class="flex flex-col items-center justify-center bg-slate-900/80 px-3 py-1 rounded-xl border border-amber-500/30">
+                    <div class="flex flex-col items-center justify-center bg-slate-900/90 px-3.5 py-1 rounded-2xl border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
                         <div class="flex items-center gap-1.5">
                             <i class="fa-solid fa-bolt text-amber-400 text-xs animate-pulse"></i>
                             <span id="energy-text" class="text-xs font-black tracking-wide text-amber-300">5 / 5</span>
@@ -63,149 +87,202 @@
                         <span id="energy-timer" class="text-[8px] font-bold text-slate-400">FULL</span>
                     </div>
 
-                    <button id="add-energy-ad-btn" onclick="watchAdForEnergy()" class="bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-[10px] px-2.5 py-2 rounded-xl flex items-center gap-1 shadow-md transition">
+                    <button id="add-energy-ad-btn" onclick="watchAdForEnergy()" class="bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 active:scale-95 text-slate-950 font-black text-[11px] px-3 py-2 rounded-2xl flex items-center gap-1.5 shadow-lg shadow-amber-500/20 transition">
                         <i class="fa-solid fa-play text-[9px]"></i>
                         <span>+1 ⚡</span>
                     </button>
                 </div>
 
                 <div class="text-right">
-                    <p class="text-[10px] text-slate-400 font-medium">Մակարդակ</p>
-                    <p class="text-lg font-bold text-indigo-400" id="level-display">Level 1</p>
+                    <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Մակարդակ</p>
+                    <p class="text-lg font-black text-indigo-400" id="level-display">Level 1</p>
                 </div>
             </div>
             
-            <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
+            <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400 mb-1.5">
                 <span>Level Progress</span>
-                <span id="level-progress-text">0 / 60</span>
+                <span id="level-progress-text" class="text-slate-200">0 / 60</span>
             </div>
-            <div class="w-full bg-slate-700/60 rounded-full h-2 overflow-hidden">
-                <div id="level-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            <div class="w-full bg-slate-950/60 rounded-full h-2 p-0.5 border border-slate-800">
+                <div id="level-progress-bar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
         </header>
 
-        <main class="flex-1 flex items-center justify-center my-1 overflow-hidden">
+        <!-- Canvas Game Engine -->
+        <main class="flex-1 flex items-center justify-center my-auto overflow-hidden">
             <canvas id="gameCanvas"></canvas>
         </main>
     </div>
 
-    <div id="page-tasks" class="page-section p-2 space-y-3">
-        <div class="text-center my-2">
-            <h1 class="text-xl font-black text-amber-400">Առաջադրանքներ</h1>
-            <p class="text-xs text-slate-400">Կատարեք առաջադրանքները և ստացեք լրացուցիչ $BLOCKS</p>
+    <!-- 2. TASKS PAGE SECTION -->
+    <div id="page-tasks" class="page-section p-1 space-y-4">
+        <div class="text-center my-3">
+            <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500">Առաջադրանքներ</h1>
+            <p class="text-xs text-slate-400 mt-1">Կատարեք առաջադրանքները և ստացեք անվճար $BLOCKS</p>
         </div>
 
-        <div class="space-y-2">
-            <div class="bg-slate-800/80 border border-slate-700/60 p-3 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-sky-500/20 text-sky-400 rounded-xl flex items-center justify-center text-lg">
+        <div class="space-y-2.5">
+            <!-- Task 1 -->
+            <div class="glass-card p-3.5 rounded-3xl flex items-center justify-between border-slate-700/40 hover:border-slate-600/60 transition">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 bg-sky-500/15 border border-sky-500/30 text-sky-400 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-sky-500/10">
                         <i class="fa-brands fa-telegram"></i>
                     </div>
                     <div>
-                        <p class="text-xs font-bold">Միանալ Telegram Ալիքին</p>
-                        <p class="text-[10px] text-amber-400 font-bold">+100 $BLOCKS</p>
+                        <p class="text-xs font-bold text-slate-100">Միանալ Telegram Ալիքին</p>
+                        <p class="text-[11px] text-amber-400 font-extrabold mt-0.5">+100 $BLOCKS</p>
                     </div>
                 </div>
-                <button onclick="doTask(this, 'https://t.me/your_channel', 100)" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition">
+                <button onclick="doTask(this, 'https://t.me/your_channel', 100)" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-md shadow-indigo-600/20">
                     Կատարել
                 </button>
             </div>
 
-            <div class="bg-slate-800/80 border border-slate-700/60 p-3 rounded-2xl flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center text-lg">
+            <!-- Task 2 -->
+            <div class="glass-card p-3.5 rounded-3xl flex items-center justify-between border-slate-700/40 hover:border-slate-600/60 transition">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 bg-slate-100/10 border border-slate-100/20 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg">
                         <i class="fa-brands fa-x-twitter"></i>
                     </div>
                     <div>
-                        <p class="text-xs font-bold">Հետևել X (Twitter) էջին</p>
-                        <p class="text-[10px] text-amber-400 font-bold">+150 $BLOCKS</p>
+                        <p class="text-xs font-bold text-slate-100">Հետևել X (Twitter) էջին</p>
+                        <p class="text-[11px] text-amber-400 font-extrabold mt-0.5">+150 $BLOCKS</p>
                     </div>
                 </div>
-                <button onclick="doTask(this, 'https://x.com', 150)" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition">
+                <button onclick="doTask(this, 'https://x.com', 150)" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-md shadow-indigo-600/20">
+                    Կատարել
+                </button>
+            </div>
+
+            <!-- Task 3 -->
+            <div class="glass-card p-3.5 rounded-3xl flex items-center justify-between border-slate-700/40 hover:border-slate-600/60 transition">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 bg-red-500/15 border border-red-500/30 text-red-400 rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-red-500/10">
+                        <i class="fa-brands fa-youtube"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-100">Բաժանորդագրվել YouTube-ում</p>
+                        <p class="text-[11px] text-amber-400 font-extrabold mt-0.5">+200 $BLOCKS</p>
+                    </div>
+                </div>
+                <button onclick="doTask(this, 'https://youtube.com', 200)" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-md shadow-indigo-600/20">
                     Կատարել
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="page-friends" class="page-section p-2 space-y-3">
+    <!-- 3. REFERRAL / FRIENDS PAGE SECTION -->
+    <div id="page-friends" class="page-section p-1 space-y-4">
         <div class="text-center my-2">
-            <h1 class="text-xl font-black text-amber-400">Հրավիրիր Ընկերներ</h1>
-            <p class="text-xs text-slate-400">Ստացիր <b>+500 $BLOCKS</b> ամեն հրավիրված ընկերոջ համար</p>
+            <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500">Հրավիրիր Ընկերներ</h1>
+            <p class="text-xs text-slate-400 mt-1">Ստացեք <b class="text-amber-400">+500 $BLOCKS</b> ամեն հրավիրված ընկերոջ համար</p>
         </div>
 
-        <div class="bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl text-center space-y-3">
-            <div class="text-3xl">👥</div>
+        <!-- VIP Banner -->
+        <div class="glass-card-gold p-4 rounded-3xl text-center space-y-3 relative overflow-hidden">
+            <div class="w-12 h-12 bg-amber-500/20 border border-amber-500/40 text-amber-400 rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-lg shadow-amber-500/20">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            
             <div>
-                <p class="text-xs text-slate-400">Քո հրավիրած ընկերները</p>
-                <p class="text-2xl font-black text-indigo-400" id="friends-count">0</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Քո հրավիրած ընկերները</p>
+                <p class="text-3xl font-black text-amber-300 mt-0.5" id="friends-count">0</p>
             </div>
 
-            <div class="flex gap-2">
-                <button onclick="shareReferralLink()" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-400 active:scale-95 text-slate-950 font-black text-xs py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-user-plus"></i>
+            <div class="flex gap-2 pt-1">
+                <button onclick="shareReferralLink()" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 active:scale-95 text-slate-950 font-black text-xs py-3 rounded-2xl shadow-xl shadow-amber-500/20 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-sm"></i>
                     <span>Հրավիրել Ընկերոջ</span>
                 </button>
-                <button onclick="copyReferralLink()" class="bg-slate-700 hover:bg-slate-600 active:scale-95 text-white p-3 rounded-xl transition">
-                    <i class="fa-solid fa-copy"></i>
+                <button onclick="copyReferralLink()" class="bg-slate-800/80 border border-slate-700/60 hover:bg-slate-700 active:scale-95 text-white p-3 rounded-2xl transition">
+                    <i class="fa-regular fa-copy text-base"></i>
                 </button>
+            </div>
+        </div>
+
+        <!-- Invited Friends List -->
+        <div class="space-y-2">
+            <p class="text-xs font-bold text-slate-400 px-1">Ընկերների Ցանկ</p>
+            <div class="glass-card p-4 rounded-3xl text-center space-y-1">
+                <p class="text-xs text-slate-500 font-medium">Դեռևս հրավիրված ընկերներ չկան:</p>
             </div>
         </div>
     </div>
 
-    <div id="page-wallet" class="page-section p-2 space-y-3">
+    <!-- 4. WALLET PAGE SECTION -->
+    <div id="page-wallet" class="page-section p-1 space-y-4">
         <div class="text-center my-2">
-            <h1 class="text-xl font-black text-amber-400">Քսակ (Wallet)</h1>
-            <p class="text-xs text-slate-400">Միացրեք ձեր TON քսակը փոխանցումների համար</p>
+            <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400"> TON Wallet</h1>
+            <p class="text-xs text-slate-400 mt-1">Միացրեք ձեր քսակը ապագա Airdrop-ի համար</p>
         </div>
 
-        <div class="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl text-center space-y-4">
-            <div class="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center text-3xl mx-auto border border-blue-500/30">
+        <div class="glass-card p-5 rounded-3xl text-center space-y-4 border-indigo-500/20">
+            <div class="w-16 h-16 bg-blue-500/15 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-xl shadow-blue-500/10">
                 <i class="fa-solid fa-wallet"></i>
             </div>
 
             <div>
-                <p class="text-xs text-slate-400">Հասանելի $BLOCKS</p>
-                <p class="text-3xl font-black text-amber-400"><span class="total-score-val">0</span></p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Հասանելի Մնացորդ</p>
+                <p class="text-3xl font-black text-amber-400 mt-1"><span class="total-score-val">0</span> <span class="text-xs text-amber-300 font-bold">$BLOCKS</span></p>
             </div>
 
-            <button onclick="connectWallet()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+            <button onclick="connectWallet()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-95 text-white font-bold text-xs py-3.5 rounded-2xl shadow-xl shadow-indigo-600/25 transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-link"></i>
                 <span id="wallet-btn-text">Connect TON Wallet</span>
             </button>
         </div>
+
+        <!-- Recent Activity Mock -->
+        <div class="space-y-2">
+            <p class="text-xs font-bold text-slate-400 px-1">Գործարքների Պատմություն</p>
+            <div class="glass-card p-3.5 rounded-3xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-emerald-500/15 text-emerald-400 rounded-xl flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-200">Welcome Bonus</p>
+                        <p class="text-[10px] text-slate-400">Սկզբնական բոնուս</p>
+                    </div>
+                </div>
+                <span class="text-xs font-black text-emerald-400">+50 $BLOCKS</span>
+            </div>
+        </div>
     </div>
 
-    <nav class="grid grid-cols-4 gap-1 bg-slate-800/90 border border-slate-700/50 p-1.5 rounded-2xl mt-auto">
-        <button onclick="switchTab('game')" id="nav-game" class="nav-btn flex flex-col items-center p-1 text-amber-400">
-            <i class="fa-solid fa-gamepad text-base"></i>
-            <span class="text-[10px] font-semibold">Խաղ</span>
+    <!-- Navigation Bar -->
+    <nav class="grid grid-cols-4 gap-1 glass-card p-1.5 rounded-3xl mt-auto border-slate-700/50">
+        <button onclick="switchTab('game')" id="nav-game" class="nav-btn flex flex-col items-center p-2 rounded-2xl text-amber-400 bg-slate-800/60 transition">
+            <i class="fa-solid fa-gamepad text-base mb-0.5"></i>
+            <span class="text-[10px] font-bold">Խաղ</span>
         </button>
-        <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn flex flex-col items-center p-1 text-slate-400">
-            <i class="fa-solid fa-list-check text-base"></i>
-            <span class="text-[10px] font-semibold">Առաջադրանք</span>
+        <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-btn flex flex-col items-center p-2 rounded-2xl text-slate-400 transition">
+            <i class="fa-solid fa-list-check text-base mb-0.5"></i>
+            <span class="text-[10px] font-bold">Tasks</span>
         </button>
-        <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex flex-col items-center p-1 text-slate-400">
-            <i class="fa-solid fa-users text-base"></i>
-            <span class="text-[10px] font-semibold">Ընկերներ</span>
+        <button onclick="switchTab('friends')" id="nav-friends" class="nav-btn flex flex-col items-center p-2 rounded-2xl text-slate-400 transition">
+            <i class="fa-solid fa-users text-base mb-0.5"></i>
+            <span class="text-[10px] font-bold">Ընկերներ</span>
         </button>
-        <button onclick="switchTab('wallet')" id="nav-wallet" class="nav-btn flex flex-col items-center p-1 text-slate-400">
-            <i class="fa-solid fa-wallet text-base"></i>
-            <span class="text-[10px] font-semibold">Քսակ</span>
+        <button onclick="switchTab('wallet')" id="nav-wallet" class="nav-btn flex flex-col items-center p-2 rounded-2xl text-slate-400 transition">
+            <i class="fa-solid fa-wallet text-base mb-0.5"></i>
+            <span class="text-[10px] font-bold">Քսակ</span>
         </button>
     </nav>
 
-    <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl text-center max-w-xs w-full shadow-2xl">
-            <div class="text-4xl mb-2" id="modal-icon">🎮</div>
-            <h2 id="modal-title" class="text-xl font-bold text-amber-400 mb-1">Game Over</h2>
-            <p id="modal-desc" class="text-sm text-slate-300 mb-4">Այլևս քայլ չկա։</p>
+    <!-- Game Over Modal -->
+    <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center hidden z-50 p-4">
+        <div class="glass-card border-slate-700 p-6 rounded-3xl text-center max-w-xs w-full shadow-2xl space-y-3">
+            <div class="text-4xl" id="modal-icon">🎮</div>
+            <h2 id="modal-title" class="text-xl font-bold text-amber-400">Game Over</h2>
+            <p id="modal-desc" class="text-xs text-slate-300">Այլևս քայլ չկա։</p>
             
-            <div class="flex flex-col gap-2">
-                <button id="modal-ad-btn" onclick="watchAdForEnergy(true)" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 hidden">
+            <div class="flex flex-col gap-2 pt-2">
+                <button id="modal-ad-btn" onclick="watchAdForEnergy(true)" class="w-full bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xs py-3 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 hidden">
                     <i class="fa-solid fa-play"></i> Դիտել Գովազդ (+1 ⚡)
                 </button>
-                <button id="modal-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl shadow-lg transition">Շարունակել</button>
+                <button id="modal-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3 rounded-2xl shadow-lg transition">Շարունակել</button>
             </div>
         </div>
     </div>
@@ -214,17 +291,18 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.expand(); tg.ready(); }
 
-        // --- NAVIGATION SWITCHER ---
+        // --- TAB SWITCHER LOGIC ---
         function switchTab(tabName) {
             document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(el => {
-                el.classList.remove('text-amber-400');
+                el.classList.remove('text-amber-400', 'bg-slate-800/60');
                 el.classList.add('text-slate-400');
             });
 
             document.getElementById(`page-${tabName}`).classList.add('active');
-            document.getElementById(`nav-${tabName}`).classList.remove('text-slate-400');
-            document.getElementById(`nav-${tabName}`).classList.add('text-amber-400');
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            activeNav.classList.remove('text-slate-400');
+            activeNav.classList.add('text-amber-400', 'bg-slate-800/60');
 
             if (tabName === 'game') setTimeout(resizeCanvas, 50);
         }
@@ -232,7 +310,7 @@
         // --- REFERRAL & TASKS LOGIC ---
         function shareReferralLink() {
             const userId = tg?.initDataUnsafe?.user?.id || 'demo_user';
-            const botUsername = 'your_blockudoku_bot'; // Փոխարինեք ձեր բոտի username-ով
+            const botUsername = 'your_blockudoku_bot'; 
             const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
             const shareText = `🎮 Միացիր ինձ Blockudoku խաղում և վաստակիր $BLOCKS:`;
 
@@ -263,8 +341,8 @@
                 updateUI();
                 btn.innerText = "✓ Կատարված";
                 btn.disabled = true;
-                btn.classList.replace('bg-indigo-600', 'bg-slate-700');
-                btn.classList.add('text-slate-400');
+                btn.classList.replace('bg-indigo-600', 'bg-slate-800');
+                btn.classList.add('text-slate-500', 'border', 'border-slate-700');
             }, 3000);
         }
 
@@ -274,7 +352,7 @@
             alert("TON Wallet-ը հաջողությամբ միացվեց:");
         }
 
-        // --- GAME ENGINE CODE ---
+        // --- GAME ENGINE ---
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const GRID_SIZE = 8;
@@ -282,27 +360,21 @@
         const TOUCH_OFFSET_Y = 60; 
 
         const MAX_ENERGY = 5;
-        const RECHARGE_TIME = 30 * 60;
         let energy = parseInt(localStorage.getItem('blockudoku_energy')) || MAX_ENERGY;
-        let lastEnergyTime = parseInt(localStorage.getItem('blockudoku_last_energy_time')) || Date.now();
 
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         let totalScore = parseInt(localStorage.getItem('blockudoku_score')) || 0;
         let currentLevel = parseInt(localStorage.getItem('blockudoku_level')) || 1;
-        let matchScore = 0, streakCount = 0, floatingTexts = [];
+        let matchScore = 0;
         let dock = [null, null, null], dragging = null;
 
-        const LEVEL_CONFIGS = [{ target: 60, bonus: 10 }, { target: 90, bonus: 15 }, { target: 120, bonus: 20 }];
         const SHAPES_EASY = [[[1]], [[1, 1]], [[1], [1]], [[1, 1], [1, 1]]];
 
         function updateUI() {
             document.querySelectorAll('.total-score-val').forEach(el => el.innerText = totalScore);
             document.getElementById('level-display').innerText = `Level ${currentLevel}`;
             document.getElementById('energy-text').innerText = `${energy} / ${MAX_ENERGY}`;
-            document.getElementById('level-progress-text').innerText = `${matchScore} / ${LEVEL_CONFIGS[0].target}`;
-            const pct = Math.min((matchScore / LEVEL_CONFIGS[0].target) * 100, 100);
-            document.getElementById('level-progress-bar').style.width = `${pct}%`;
-
+            
             localStorage.setItem('blockudoku_score', totalScore);
             localStorage.setItem('blockudoku_level', currentLevel);
             localStorage.setItem('blockudoku_energy', energy);
@@ -344,16 +416,16 @@
             const height = canvas.height / window.devicePixelRatio;
             ctx.clearRect(0, 0, width, height);
 
-            ctx.fillStyle = '#1e293b';
+            ctx.fillStyle = '#0f172a';
             ctx.beginPath();
-            ctx.roundRect(boardOffsetX - 4, boardOffsetY - 4, (cellSize * GRID_SIZE) + 8, (cellSize * GRID_SIZE) + 8, 12);
+            ctx.roundRect(boardOffsetX - 4, boardOffsetY - 4, (cellSize * GRID_SIZE) + 8, (cellSize * GRID_SIZE) + 8, 16);
             ctx.fill();
 
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
-                    ctx.fillStyle = board[r][c] ? '#4f46e5' : '#334155';
+                    ctx.fillStyle = board[r][c] ? '#6366f1' : '#1e293b';
                     ctx.beginPath();
-                    ctx.roundRect(boardOffsetX + c * cellSize + 1.5, boardOffsetY + r * cellSize + 1.5, cellSize - 3, cellSize - 3, 5);
+                    ctx.roundRect(boardOffsetX + c * cellSize + 1.5, boardOffsetY + r * cellSize + 1.5, cellSize - 3, cellSize - 3, 6);
                     ctx.fill();
                 }
             }
@@ -373,12 +445,12 @@
         }
 
         function drawShape(shape, x, y, size, isDragged = false) {
-            ctx.fillStyle = isDragged ? '#818cf8' : '#6366f1';
+            ctx.fillStyle = isDragged ? '#818cf8' : '#4f46e5';
             for (let r = 0; r < shape.length; r++) {
                 for (let c = 0; c < shape[r].length; c++) {
                     if (shape[r][c]) {
                         ctx.beginPath();
-                        ctx.roundRect(x + c * size + 1, y + r * size + 1, size - 2, size - 2, 4);
+                        ctx.roundRect(x + c * size + 1, y + r * size + 1, size - 2, size - 2, 5);
                         ctx.fill();
                     }
                 }
