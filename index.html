@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blockudoku Mini App - Phase 2</title>
+    <title>Blockudoku Mini App - Harder & Fixed Energy</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -43,7 +43,7 @@
                 <p class="text-xl font-black text-amber-400"><span id="score">0</span></p>
             </div>
             
-            <!-- Beautiful Energy Badge -->
+            <!-- Energy Badge -->
             <div class="flex flex-col items-center justify-center bg-slate-900/80 px-3 py-1 rounded-xl border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
                 <div class="flex items-center gap-1.5">
                     <i class="fa-solid fa-bolt text-amber-400 text-xs animate-pulse"></i>
@@ -60,7 +60,7 @@
         
         <div class="flex justify-between items-center text-[10px] text-slate-400 mb-1">
             <span>Level Progress</span>
-            <span id="level-progress-text">0 / 30</span>
+            <span id="level-progress-text">0 / 60</span>
         </div>
         <div class="w-full bg-slate-700/60 rounded-full h-2 overflow-hidden">
             <div id="level-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
@@ -119,30 +119,31 @@
 
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         
-        // --- 20 Level Economics ---
+        // --- Harder Level Economics (Increased Targets) ---
         const LEVEL_CONFIGS = [
-            { target: 30, bonus: 5 },
-            { target: 40, bonus: 5 },
-            { target: 50, bonus: 10 },
             { target: 60, bonus: 10 },
-            { target: 75, bonus: 15 },
             { target: 90, bonus: 15 },
-            { target: 105, bonus: 20 },
             { target: 120, bonus: 20 },
-            { target: 135, bonus: 20 },
             { target: 150, bonus: 25 },
-            { target: 165, bonus: 25 },
-            { target: 180, bonus: 25 },
-            { target: 195, bonus: 30 },
-            { target: 210, bonus: 30 },
-            { target: 225, bonus: 30 },
-            { target: 240, bonus: 35 },
-            { target: 255, bonus: 35 },
-            { target: 270, bonus: 35 },
-            { target: 285, bonus: 40 },
-            { target: 300, bonus: 50 }
+            { target: 180, bonus: 30 },
+            { target: 220, bonus: 35 },
+            { target: 260, bonus: 40 },
+            { target: 300, bonus: 45 },
+            { target: 350, bonus: 50 },
+            { target: 400, bonus: 60 },
+            { target: 450, bonus: 70 },
+            { target: 500, bonus: 80 },
+            { target: 560, bonus: 90 },
+            { target: 620, bonus: 100 },
+            { target: 680, bonus: 110 },
+            { target: 750, bonus: 120 },
+            { target: 820, bonus: 130 },
+            { target: 900, bonus: 140 },
+            { target: 980, bonus: 150 },
+            { target: 1100, bonus: 200 }
         ];
 
+        // Basic Easy Shapes
         const SHAPES_EASY = [
             [[1]], 
             [[1, 1]], [[1], [1]], 
@@ -150,24 +151,28 @@
             [[1, 1, 1]], [[1], [1], [1]]
         ];
 
+        // Medium Shapes - Large bars, L-shapes, T-shapes
         const SHAPES_MEDIUM = [
             ...SHAPES_EASY,
             [[1, 1, 1, 1]], [[1], [1], [1], [1]],
             [[1, 0], [1, 0], [1, 1]], [[0, 1], [0, 1], [1, 1]],
-            [[1, 1, 1], [0, 1, 0]]
+            [[1, 1, 1], [0, 1, 0]], [[0, 1, 0], [1, 1, 1]],
+            [[1, 1], [1, 0]], [[1, 1], [0, 1]]
         ];
 
+        // Hard Shapes - Large 3x3 blocks, Big Z-shapes, Huge Corner Blocks
         const SHAPES_HARD = [
             ...SHAPES_MEDIUM,
-            [[1, 1, 1], [1, 1, 1], [1, 1, 1]], 
+            [[1, 1, 1], [1, 1, 1], [1, 1, 1]], // 3x3 Block
             [[1, 1, 0], [0, 1, 1]], [[0, 1, 1], [1, 1, 0]],
-            [[1, 1, 1], [1, 0, 0], [1, 0, 0]]
+            [[1, 1, 1], [1, 0, 0], [1, 0, 0]], [[1, 1, 1], [0, 0, 1], [0, 0, 1]],
+            [[1, 1, 1, 1, 1]], [[1], [1], [1], [1], [1]] // 5-length Bars
         ];
 
         let totalScore = parseInt(localStorage.getItem('blockudoku_score')) || 0;
         let currentLevel = parseInt(localStorage.getItem('blockudoku_level')) || 1;
         let matchScore = 0; 
-        let energy = parseInt(localStorage.getItem('blockudoku_energy')) ?? 5;
+        let energy = localStorage.getItem('blockudoku_energy') !== null ? parseInt(localStorage.getItem('blockudoku_energy')) : 5;
 
         // Visual Effects Arrays
         let floatingTexts = [];
@@ -182,8 +187,8 @@
         }
 
         function getShapePool() {
-            if (currentLevel <= 3) return SHAPES_EASY;
-            if (currentLevel <= 10) return SHAPES_MEDIUM;
+            if (currentLevel === 1) return SHAPES_EASY;
+            if (currentLevel <= 4) return SHAPES_MEDIUM;
             return SHAPES_HARD;
         }
 
@@ -384,8 +389,9 @@
         }
 
         canvas.addEventListener('pointerdown', (e) => {
-            if (energy <= 0 && matchScore === 0) {
-                showModal('⚡ Էներգիան սպառվեց', 'Դուք օգտագործել եք ձեր բոլոր 5 խաղափորձերը։ Սպասեք էներգիայի վերականգնմանը:', '⚡', () => {});
+            // Check Energy before playing
+            if (energy <= 0) {
+                showModal('⚡ Էներգիան սպառվել է', 'Դուք սպառել եք ձեր 5 էներգիան։ Սպասեք էներգիայի վերականգնմանը:', '⚡', () => {});
                 return;
             }
 
@@ -398,13 +404,6 @@
                     if (dock[i]) {
                         const startX = i * dockWidth;
                         if (pos.x >= startX && pos.x <= startX + dockWidth) {
-                            
-                            // Deduct 1 Energy on first move of the match
-                            if (matchScore === 0 && board.every(row => row.every(v => v === 0))) {
-                                energy--;
-                                updateUI();
-                            }
-
                             dragging = {
                                 shape: dock[i],
                                 index: i,
@@ -500,9 +499,9 @@
             if (cleared > 0) {
                 streakCount++;
                 
-                let gained = cleared === 1 ? 1 : (cleared === 2 ? 3 : 6);
+                // Slightly reduced points for harder gameplay
+                let gained = cleared === 1 ? 1 : (cleared === 2 ? 2 : 4);
                 
-                // Streak Bonus
                 if (streakCount > 1) {
                     gained += 1;
                     addFloatingText(`STREAK x${streakCount}! 🔥`, '#f59e0b', 22);
@@ -522,7 +521,7 @@
                     totalScore += config.bonus; 
                     showModal(
                         `🎉 Level ${currentLevel} Completed!`, 
-                        `Դուք անցաք մակարդակը և ստացաք +${config.bonus} $BLOCKS բոնուս:`,
+                        `Դուք հաղթահարեցիք մակարդակը և ստացաք +${config.bonus} $BLOCKS բոնուս:`,
                         '🎉',
                         nextLevel
                     );
@@ -553,10 +552,16 @@
                 if (canMoveAny) break;
             }
 
+            // GAME OVER - Deduct Energy here
             if (!canMoveAny && dock.some(s => s !== null)) {
+                if (energy > 0) {
+                    energy--; // Deduct 1 Energy
+                }
+                updateUI();
+
                 showModal(
                     '💥 Game Over', 
-                    `Այլևս քայլ չկա։ Ձեր ${matchScore} $BLOCKS-ը պահպանվել է, բայց այս մակարդակի progress-ը զրոյանում է:`,
+                    `Այլևս քայլ չկա։ Դուք կորցրեցիք 1 Էներգիա (⚡): Մնաց ${energy} էներգիա:`,
                     '💥',
                     restartLevelOnly
                 );
