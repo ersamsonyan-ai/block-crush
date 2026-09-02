@@ -2,474 +2,291 @@
 <html lang="hy">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Block Crush Telegram Mini App</title>
-    <!-- Telegram WebApp SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Block Puzzle - Premium Mechanics</title>
     <style>
-        * {
-            box-sizing: border-box;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
-            height: 100vh;
-            margin: 0;
         }
 
-        .grid-board {
+        .game-header {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0,255,204,0.5);
+        }
+
+        .score-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        /* 8x8 Grid Styles */
+        .board {
             display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 4px;
-            background: rgba(30, 41, 59, 0.85);
-            padding: 8px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        /* Քաշելու ընթացքում տախտակի թեթևակի լուսավորում (առանց հուշելու վանդակները) */
-        .grid-board.active-hover {
-            border-color: rgba(99, 102, 241, 0.6);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            grid-template-columns: repeat(8, 45px);
+            grid-template-rows: repeat(8, 45px);
+            gap: 6px;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 20px;
+            border: 2px solid rgba(0, 255, 204, 0.3);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.15), inset 0 0 15px rgba(0,0,0,0.8);
+            position: relative;
         }
 
         .cell {
-            aspect-ratio: 1;
-            background: #334155;
-            border-radius: 6px;
-            transition: background-color 0.1s ease;
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.15s, border-color 0.15s, transform 0.15s;
+        }
+
+        .cell.highlight {
+            background: rgba(0, 255, 204, 0.35) !important;
+            border-color: #00ffcc !important;
+            box-shadow: 0 0 12px #00ffcc;
         }
 
         .cell.filled {
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #ff007f, #7928ca);
+            border: 1px solid #ff77e9;
+            box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4), inset 0 2px 4px rgba(255,255,255,0.4);
+            border-radius: 8px;
         }
 
-        .shape-container {
+        /* Shape Spawn Zone */
+        .shapes-container {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px;
+            width: 100%;
+        }
+
+        .shape-slot {
+            width: 110px;
+            height: 110px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
-            background: rgba(30, 41, 59, 0.6);
-            border-radius: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            cursor: grab;
-            min-height: 75px;
-            min-width: 75px;
-            touch-action: none;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 15px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
         }
 
-        .shape-preview {
+        .shape {
             display: grid;
             gap: 3px;
-            pointer-events: none;
+            cursor: grab;
+            touch-action: none;
+            transition: transform 0.1s ease;
         }
 
-        .shape-cell {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
+        .shape:active {
+            cursor: grabbing;
         }
 
-        /* Dragging element-ի ձևավորում (մատից 60px վերև) */
+        .shape-block {
+            width: 25px;
+            height: 25px;
+            background: linear-gradient(135deg, #00f2fe, #4facfe);
+            border-radius: 5px;
+            border: 1px solid #a6c1ee;
+            box-shadow: 0 2px 8px rgba(79, 172, 254, 0.5), inset 0 1px 2px rgba(255,255,255,0.6);
+        }
+
         .dragging {
             position: fixed !important;
-            pointer-events: none !important;
-            z-index: 1000 !important;
-            transform: translate(-50%, calc(-50% - 60px)) scale(1.15) !important;
-            opacity: 0.95;
-            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.6));
+            pointer-events: none;
+            z-index: 1000;
+            transform: scale(1.15);
         }
 
-        .progress-bar {
-            transition: width 0.3s ease;
-        }
-
-        .nav-btn.active {
-            color: #fbbf24;
+        .dragging .shape-block {
+            width: 45px;
+            height: 45px;
+            gap: 6px;
+            box-shadow: 0 10px 25px rgba(0, 242, 254, 0.6);
         }
     </style>
 </head>
-<body class="flex flex-col h-screen justify-between p-3 max-w-md mx-auto">
+<body>
 
-    <!-- Header & Level Info -->
-    <header class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-3 shadow-lg">
-        <div class="flex justify-between items-center mb-2">
-            <div>
-                <p class="text-xs text-slate-400 font-medium">Միավորներ</p>
-                <p class="text-xl font-black text-amber-400 drop-shadow"><span id="score">0</span> $BLOCKS</p>
-            </div>
-            <div class="text-right">
-                <p class="text-xs text-slate-400 font-medium">Մակարդակ</p>
-                <p class="text-lg font-bold text-indigo-400" id="level-display">Level 1</p>
-            </div>
-        </div>
-
-        <!-- Level Progress Bar -->
-        <div class="w-full bg-slate-700/60 rounded-full h-2.5 overflow-hidden">
-            <div id="level-progress" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
-        </div>
-        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
-            <span>Առաջընթաց</span>
-            <span id="progress-text">0 / 200</span>
-        </div>
-    </header>
-
-    <!-- TAB 1: GAME SECTION -->
-    <div id="tab-game" class="tab-content flex-1 flex flex-col justify-between my-1">
-        <div class="text-center my-1 text-xs text-slate-300 font-medium bg-slate-800/50 py-1 px-3 rounded-lg border border-slate-700/30">
-            🖐️ Քաշեք ֆիգուրը դեպի տախտակը
-        </div>
-
-        <!-- Main Game Board -->
-        <main class="flex-1 flex flex-col justify-center items-center my-1">
-            <div class="w-full">
-                <div id="board" class="grid-board"></div>
-            </div>
-        </main>
-
-        <!-- Shape Selection Dock -->
-        <div class="bg-slate-800/80 backdrop-blur border border-slate-700/50 rounded-2xl p-2 min-h-[95px] flex justify-around items-center gap-2" id="shapes-dock">
-            <!-- 3 shapes will render here -->
-        </div>
+    <div class="game-header">
+        <div class="score-box">Միավոր: <span id="score">0</span></div>
     </div>
 
-    <!-- TAB 2: TASKS SECTION -->
-    <div id="tab-tasks" class="tab-content flex-1 hidden my-2 overflow-y-auto">
-        <div class="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4">
-            <h2 class="text-lg font-bold text-amber-400 mb-3"><i class="fa-solid fa-list-check mr-2"></i>Առաջադրանքներ</h2>
-            <div class="space-y-3">
-                <div class="flex justify-between items-center bg-slate-700/50 p-3 rounded-xl border border-slate-600/30">
-                    <div>
-                        <p class="text-sm font-semibold">Միացեք մեր Telegram ալիքին</p>
-                        <p class="text-xs text-amber-400">+200 $BLOCKS</p>
-                    </div>
-                    <button onclick="alert('Առաջադրանքը կատարված է')" class="bg-indigo-600 hover:bg-indigo-500 text-xs px-3 py-1.5 rounded-lg font-bold">Կատարել</button>
-                </div>
-                <div class="flex justify-between items-center bg-slate-700/50 p-3 rounded-xl border border-slate-600/30">
-                    <div>
-                        <p class="text-sm font-semibold">Հրավիրեք 3 ընկերոջ</p>
-                        <p class="text-xs text-amber-400">+500 $BLOCKS</p>
-                    </div>
-                    <button onclick="alert('Հրավիրեք ընկերներին Ընկերներ բաժնից')" class="bg-indigo-600 hover:bg-indigo-500 text-xs px-3 py-1.5 rounded-lg font-bold">Ստուգել</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB 3: FRIENDS SECTION -->
-    <div id="tab-friends" class="tab-content flex-1 hidden my-2 overflow-y-auto">
-        <div class="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4 text-center">
-            <h2 class="text-lg font-bold text-amber-400 mb-2"><i class="fa-solid fa-users mr-2"></i>Հրավիրիր ընկերների</h2>
-            <p class="text-xs text-slate-300 mb-4">Ստացիր 10% բոնուս յուրաքանչյուր հրավիրած ընկերոջ վաստակած միավորներից։</p>
-            <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-600/30 mb-4">
-                <p class="text-xs text-slate-400">Քո հրավիրած ընկերները</p>
-                <p class="text-2xl font-bold text-white">0</p>
-            </div>
-            <button onclick="shareReferralLink()" class="w-full bg-gradient-to-r from-amber-500 to-indigo-600 font-bold py-2.5 rounded-xl text-sm shadow-lg">
-                <i class="fa-solid fa-share-nodes mr-2"></i>Հրավիրել ընկերոջ
-            </button>
-        </div>
-    </div>
-
-    <!-- TAB 4: WALLET SECTION -->
-    <div id="tab-wallet" class="tab-content flex-1 hidden my-2 overflow-y-auto">
-        <div class="bg-slate-800/80 border border-slate-700/50 rounded-2xl p-4 text-center">
-            <h2 class="text-lg font-bold text-amber-400 mb-2"><i class="fa-solid fa-wallet mr-2"></i>Web3 Քսակ</h2>
-            <p class="text-xs text-slate-300 mb-4">Միացրու TON քսակը $BLOCKS թոքենները ստանալու համար։</p>
-            <div class="bg-slate-700/50 p-4 rounded-xl border border-slate-600/30 mb-4">
-                <i class="fa-solid fa-coins text-3xl text-amber-400 mb-2"></i>
-                <p class="text-xs text-slate-400">Airdrop-ը շուտով</p>
-            </div>
-            <button onclick="alert('TON Wallet միացումը շուտով հասանելի կլինի')" class="w-full bg-blue-600 hover:bg-blue-500 font-bold py-2.5 rounded-xl text-sm">
-                Միացնել Wallet-ը
-            </button>
-        </div>
-    </div>
-
-    <!-- Navigation Bar -->
-    <nav class="grid grid-cols-4 gap-1 bg-slate-800/90 border border-slate-700/50 p-1.5 rounded-2xl">
-        <button onclick="switchTab('game')" id="btn-game" class="nav-btn active flex flex-col items-center p-1.5 text-slate-400 hover:text-white">
-            <i class="fa-solid fa-gamepad text-base"></i>
-            <span class="text-[10px] font-semibold mt-0.5">Խաղ</span>
-        </button>
-        <button onclick="switchTab('tasks')" id="btn-tasks" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 hover:text-white">
-            <i class="fa-solid fa-list-check text-base"></i>
-            <span class="text-[10px] font-semibold mt-0.5">Առաջադրանք</span>
-        </button>
-        <button onclick="switchTab('friends')" id="btn-friends" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 hover:text-white">
-            <i class="fa-solid fa-users text-base"></i>
-            <span class="text-[10px] font-semibold mt-0.5">Ընկերներ</span>
-        </button>
-        <button onclick="switchTab('wallet')" id="btn-wallet" class="nav-btn flex flex-col items-center p-1.5 text-slate-400 hover:text-white">
-            <i class="fa-solid fa-wallet text-base"></i>
-            <span class="text-[10px] font-semibold mt-0.5">Քսակ</span>
-        </button>
-    </nav>
-
-    <!-- Modal -->
-    <div id="modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl text-center max-w-xs w-full shadow-2xl">
-            <div class="text-4xl mb-2">🎉</div>
-            <h2 id="modal-title" class="text-xl font-bold text-amber-400 mb-1">Level Up!</h2>
-            <p id="modal-desc" class="text-sm text-slate-300 mb-4">Դուք անցաք հաջորդ մակարդակ։</p>
-            <button id="modal-btn" onclick="closeModal()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl">Շարունակել</button>
-        </div>
+    <div class="game-container">
+        <div class="board" id="board"></div>
+        <div class="shapes-container" id="shapes-container"></div>
     </div>
 
     <script>
-        const tg = window.Telegram?.WebApp;
-        if (tg) { 
-            tg.expand(); 
-            tg.ready(); 
-        }
-
         const BOARD_SIZE = 8;
-        let boardState = Array(BOARD_SIZE).fill(0).map(() => Array(BOARD_SIZE).fill(0));
-        
+        const CELL_SIZE = 45;
+        const CELL_GAP = 6;
+        const boardElement = document.getElementById('board');
+        const scoreElement = document.getElementById('score');
+        const shapesContainer = document.getElementById('shapes-container');
+
+        let grid = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
         let score = 0;
-        let currentLevel = 1;
-        let levelStartScore = 0;
-        let levelGoal = 200; 
 
         const SHAPES = [
-            [[1, 1], [1, 1]],                    // 2x2 Square
-            [[1, 1, 1], [1, 1, 1], [1, 1, 1]],    // 3x3 Big Square
-            [[1, 1, 1]],                          // 3 Line Horizontal
-            [[1], [1], [1]],                      // 3 Line Vertical
-            [[1, 1, 1, 1]],                       // 4 Line Horizontal
-            [[1], [1], [1], [1]],                 // 4 Line Vertical
-            [[1, 1, 1, 1, 1]],                    // 5 Line Horizontal
-            [[1], [1], [1], [1], [1]],            // 5 Line Vertical
-            [[1, 0], [1, 0], [1, 1]],             // L Shape 1
-            [[0, 1], [0, 1], [1, 1]],             // L Shape 2
-            [[1, 1, 1], [1, 0, 0]],               // L Big 1
-            [[1, 1, 1], [0, 0, 1]],               // L Big 2
-            [[1, 1, 1], [0, 1, 0]],               // T Shape 1
-            [[0, 1, 0], [1, 1, 1]],               // T Shape 2
-            [[1, 1, 0], [0, 1, 1]],               // Z Shape 1
-            [[0, 1, 1], [1, 1, 0]],               // Z Shape 2
-            [[1, 1], [1, 0]],                     // Corner 2x2
-            [[1, 1], [0, 1]]                      // Corner 2x2 Inv
+            [[1]], 
+            [[1, 1]], 
+            [[1], [1]], 
+            [[1, 1], [1, 1]], 
+            [[1, 1, 1]], 
+            [[1, 0], [1, 1]], 
+            [[1, 1, 1], [0, 1, 0]],
+            [[1, 1, 1, 1]]
         ];
 
-        let dockShapesData = [null, null, null];
-        let activeDragElement = null;
-        let activeShapeData = null;
-        let activeDockIndex = null;
-
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-            document.getElementById(`btn-${tabName}`).classList.add('active');
-
-            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        }
-
-        function shareReferralLink() {
-            const botUsername = tg?.initDataUnsafe?.bot?.username || 'YourBot';
-            const userId = tg?.initDataUnsafe?.user?.id || '';
-            const shareUrl = `https://t.me/share/url?url=https://t.me/${botUsername}?start=${userId}&text=Միացիր%20ինձ%20Block%20Crush%20խաղում!`;
-            
-            if (tg?.openTelegramLink) {
-                tg.openTelegramLink(shareUrl);
-            } else {
-                window.open(shareUrl, '_blank');
-            }
-        }
-
+        // Initialize Board
         function initBoard() {
-            const boardEl = document.getElementById('board');
-            boardEl.innerHTML = '';
+            boardElement.innerHTML = '';
             for (let r = 0; r < BOARD_SIZE; r++) {
                 for (let c = 0; c < BOARD_SIZE; c++) {
                     const cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.dataset.r = r;
-                    cell.dataset.c = c;
-                    boardEl.appendChild(cell);
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    boardElement.appendChild(cell);
                 }
             }
         }
 
-        function renderDockShapes() {
-            const dock = document.getElementById('shapes-dock');
-            dock.innerHTML = '';
-            dockShapesData = [];
-
+        // Spawn 3 shapes
+        function spawnShapes() {
+            shapesContainer.innerHTML = '';
             for (let i = 0; i < 3; i++) {
-                const shapeData = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-                dockShapesData.push(shapeData);
-
-                const shapeContainer = document.createElement('div');
-                shapeContainer.className = 'shape-container';
-                shapeContainer.dataset.index = i;
-
-                const preview = createShapeElement(shapeData);
-                shapeContainer.appendChild(preview);
-                dock.appendChild(shapeContainer);
-
-                shapeContainer.addEventListener('touchstart', (e) => startDrag(e, i, shapeData, shapeContainer), { passive: false });
-                shapeContainer.addEventListener('mousedown', (e) => startDrag(e, i, shapeData, shapeContainer));
+                const slot = document.createElement('div');
+                slot.classList.add('shape-slot');
+                
+                const randomShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+                const shapeEl = createShapeElement(randomShape);
+                
+                slot.appendChild(shapeEl);
+                shapesContainer.appendChild(slot);
+                makeDraggable(shapeEl, randomShape);
             }
-            checkGameOver();
         }
 
-        function createShapeElement(shape) {
-            const container = document.createElement('div');
-            container.className = 'shape-preview';
-            container.style.gridTemplateColumns = `repeat(${shape[0].length}, 1fr)`;
+        function createShapeElement(matrix) {
+            const shape = document.createElement('div');
+            shape.classList.add('shape');
+            shape.style.gridTemplateColumns = `repeat(${matrix[0].length}, 25px)`;
             
-            shape.forEach(row => {
+            matrix.forEach(row => {
                 row.forEach(val => {
-                    const cell = document.createElement('div');
-                    cell.className = 'shape-cell';
-                    cell.style.background = val ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'transparent';
-                    container.appendChild(cell);
+                    const block = document.createElement('div');
+                    if (val) block.classList.add('shape-block');
+                    else block.style.opacity = '0';
+                    shape.appendChild(block);
                 });
             });
-            return container;
+            return shape;
         }
 
-        function startDrag(e, index, shapeData, container) {
-            e.preventDefault();
-            activeDockIndex = index;
-            activeShapeData = shapeData;
+        // Drag & Snap Logic
+        function makeDraggable(element, matrix) {
+            let offsetR, offsetC;
 
-            activeDragElement = container.cloneNode(true);
-            activeDragElement.classList.add('dragging');
-            document.body.appendChild(activeDragElement);
+            const onPointerDown = (e) => {
+                element.classList.add('dragging');
+                moveAt(e.clientX, e.clientY);
 
-            container.style.opacity = '0.2';
-            document.getElementById('board').classList.add('active-hover');
+                document.addEventListener('pointermove', onPointerMove);
+                document.addEventListener('pointerup', onPointerUp);
+            };
 
-            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            const moveAt = (clientX, clientY) => {
+                element.style.left = clientX - (matrix[0].length * CELL_SIZE) / 2 + 'px';
+                element.style.top = clientY - (matrix.length * CELL_SIZE) / 2 + 'px';
 
-            const moveHandler = (e) => onDragMove(e);
-            const endHandler = (e) => onDragEnd(e, moveHandler, endHandler, container);
-
-            document.addEventListener('touchmove', moveHandler, { passive: false });
-            document.addEventListener('touchend', endHandler);
-            document.addEventListener('mousemove', moveHandler);
-            document.addEventListener('mouseup', endHandler);
-
-            onDragMove(e);
-        }
-
-        function onDragMove(e) {
-            if (!activeDragElement) return;
-            e.preventDefault();
-
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-            activeDragElement.style.left = `${clientX}px`;
-            activeDragElement.style.top = `${clientY}px`;
-        }
-
-        function getTargetBoardCell(x, y) {
-            const board = document.getElementById('board');
-            const boardRect = board.getBoundingClientRect();
-
-            if (x < boardRect.left - 30 || x > boardRect.right + 30 ||
-                y < boardRect.top - 30 || y > boardRect.bottom + 30) {
-                return null;
-            }
-
-            const cells = document.querySelectorAll('.cell');
-            let closestCell = null;
-            let minDistance = 60;
-
-            cells.forEach(cell => {
-                const rect = cell.getBoundingClientRect();
-                const cellCenterX = rect.left + rect.width / 2;
-                const cellCenterY = rect.top + rect.height / 2;
-
-                const distance = Math.hypot(x - cellCenterX, y - cellCenterY);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestCell = cell;
+                clearHighlights();
+                const target = getGridTarget(clientX, clientY, matrix);
+                if (target && canPlace(matrix, target.r, target.c)) {
+                    highlightTarget(matrix, target.r, target.c);
                 }
-            });
+            };
 
-            return closestCell;
-        }
+            const onPointerMove = (e) => moveAt(e.clientX, e.clientY);
 
-        function onDragEnd(e, moveHandler, endHandler, originalContainer) {
-            document.removeEventListener('touchmove', moveHandler);
-            document.removeEventListener('touchend', endHandler);
-            document.removeEventListener('mousemove', moveHandler);
-            document.removeEventListener('mouseup', endHandler);
+            const onPointerUp = (e) => {
+                document.removeEventListener('pointermove', onPointerMove);
+                document.removeEventListener('pointerup', onPointerUp);
 
-            document.getElementById('board').classList.remove('active-hover');
+                element.classList.remove('dragging');
+                element.style.left = '';
+                element.style.top = '';
 
-            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-            const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-
-            // 60px բարձրացում մատից
-            const targetCell = getTargetBoardCell(clientX, clientY - 60);
-            let placed = false;
-
-            if (targetCell && activeShapeData) {
-                const r = parseInt(targetCell.dataset.r);
-                const c = parseInt(targetCell.dataset.c);
-                if (canPlace(activeShapeData, r, c)) {
-                    executePlacement(activeShapeData, r, c, activeDockIndex);
-                    originalContainer.remove();
-                    placed = true;
+                const target = getGridTarget(e.clientX, e.clientY, matrix);
+                
+                // SNAP Logic: If valid place found, snap automatically
+                if (target && canPlace(matrix, target.r, target.c)) {
+                    placeShape(matrix, target.r, target.c);
+                    element.parentElement.innerHTML = ''; // Remove from slot
+                    checkAndClearLines();
+                    if (shapesContainer.querySelectorAll('.shape').length === 0) {
+                        spawnShapes();
+                    }
                 }
-            }
+                clearHighlights();
+            };
 
-            if (!placed) {
-                originalContainer.style.opacity = '1';
-                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-            }
-
-            if (activeDragElement) {
-                activeDragElement.remove();
-                activeDragElement = null;
-            }
-
-            const remainingShapes = dockShapesData.filter(s => s !== null);
-            if (remainingShapes.length === 0) {
-                renderDockShapes();
-            } else {
-                checkGameOver();
-            }
+            element.addEventListener('pointerdown', onPointerDown);
         }
 
-        function executePlacement(shape, r, c, dockIndex) {
-            placeShape(shape, r, c);
+        // Get nearest Grid coordinates
+        function getGridTarget(clientX, clientY, matrix) {
+            const rect = boardElement.getBoundingClientRect();
+            const relX = clientX - rect.left - (CELL_GAP / 2);
+            const relY = clientY - rect.top - (CELL_GAP / 2);
 
-            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            const col = Math.floor(relX / (CELL_SIZE + CELL_GAP));
+            const row = Math.floor(relY / (CELL_SIZE + CELL_GAP));
 
-            dockShapesData[dockIndex] = null;
-
-            checkCompletedLines();
-            updateBoardUI();
+            if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) {
+                return { r: row, c: col };
+            }
+            return null;
         }
 
-        function canPlace(shape, r, c) {
-            for (let sr = 0; sr < shape.length; sr++) {
-                for (let sc = 0; sc < shape[sr].length; sc++) {
-                    if (shape[sr][sc]) {
-                        let nr = r + sr, nc = c + sc;
-                        if (nr >= BOARD_SIZE || nc >= BOARD_SIZE || boardState[nr][nc]) {
+        function canPlace(matrix, r, c) {
+            for (let row = 0; row < matrix.length; row++) {
+                for (let col = 0; col < matrix[row].length; col++) {
+                    if (matrix[row][col]) {
+                        const targetR = r + row;
+                        const targetC = c + col;
+                        if (targetR >= BOARD_SIZE || targetC >= BOARD_SIZE || grid[targetR][targetC] === 1) {
                             return false;
                         }
                     }
@@ -478,139 +295,75 @@
             return true;
         }
 
-        function placeShape(shape, r, c) {
-            for (let sr = 0; sr < shape.length; sr++) {
-                for (let sc = 0; sc < shape[sr].length; sc++) {
-                    if (shape[sr][sc]) {
-                        boardState[r + sr][c + sc] = 1;
+        function highlightTarget(matrix, r, c) {
+            for (let row = 0; row < matrix.length; row++) {
+                for (let col = 0; col < matrix[row].length; col++) {
+                    if (matrix[row][col]) {
+                        const targetR = r + row;
+                        const targetC = c + col;
+                        const cell = boardElement.children[targetR * BOARD_SIZE + targetC];
+                        if (cell) cell.classList.add('highlight');
                     }
                 }
             }
         }
 
-        function checkCompletedLines() {
-            let fullRows = [], fullCols = [];
+        function clearHighlights() {
+            document.querySelectorAll('.cell.highlight').forEach(cell => cell.classList.remove('highlight'));
+        }
 
+        function placeShape(matrix, r, c) {
+            for (let row = 0; row < matrix.length; row++) {
+                for (let col = 0; col < matrix[row].length; col++) {
+                    if (matrix[row][col]) {
+                        const targetR = r + row;
+                        const targetC = c + col;
+                        grid[targetR][targetC] = 1;
+                        const cell = boardElement.children[targetR * BOARD_SIZE + targetC];
+                        cell.classList.add('filled');
+                    }
+                }
+            }
+            score += 10;
+            scoreElement.textContent = score;
+        }
+
+        function checkAndClearLines() {
+            let linesToClearR = [];
+            let linesToClearC = [];
+
+            // Rows
             for (let r = 0; r < BOARD_SIZE; r++) {
-                if (boardState[r].every(v => v === 1)) fullRows.push(r);
+                if (grid[r].every(val => val === 1)) linesToClearR.push(r);
             }
+            // Cols
             for (let c = 0; c < BOARD_SIZE; c++) {
-                let full = true;
-                for (let r = 0; r < BOARD_SIZE; r++) {
-                    if (!boardState[r][c]) full = false;
+                if (grid.every(row => row[c] === 1)) linesToClearC.push(c);
+            }
+
+            // Clear
+            linesToClearR.forEach(r => {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    grid[r][c] = 0;
+                    boardElement.children[r * BOARD_SIZE + c].classList.remove('filled');
                 }
-                if (full) fullCols.push(c);
-            }
-
-            fullRows.forEach(r => boardState[r].fill(0));
-            fullCols.forEach(c => { for (let r = 0; r < BOARD_SIZE; r++) boardState[r][c] = 0; });
-
-            const totalCleared = fullRows.length + fullCols.length;
-            if (totalCleared > 0) {
-                const bonus = totalCleared * 20 * totalCleared; 
-                addScore(bonus);
-                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-            }
-        }
-
-        function addScore(pts) {
-            score += pts;
-            document.getElementById('score').innerText = score;
-            updateLevelProgress();
-        }
-
-        function updateLevelProgress() {
-            const currentLevelProgress = score - levelStartScore;
-            const targetProgress = levelGoal - levelStartScore;
-            
-            const progressPct = Math.min(Math.max((currentLevelProgress / targetProgress) * 100, 0), 100);
-            document.getElementById('level-progress').style.width = `${progressPct}%`;
-            document.getElementById('progress-text').innerText = `${score} / ${levelGoal}`;
-
-            if (score >= levelGoal) {
-                currentLevel++;
-                levelStartScore = levelGoal;
-                levelGoal = levelStartScore + Math.floor(200 * Math.pow(1.4, currentLevel - 1));
-                
-                document.getElementById('level-display').innerText = `Level ${currentLevel}`;
-                showModal('Level Up!', `Շնորհավորում ենք, դուք հասաք Level ${currentLevel}-ին։`);
-                
-                if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-                updateLevelProgress();
-            }
-        }
-
-        function updateBoardUI() {
-            const cells = document.querySelectorAll('.cell');
-            cells.forEach(cell => {
-                let r = parseInt(cell.dataset.r);
-                let c = parseInt(cell.dataset.c);
-                if (boardState[r][c]) cell.classList.add('filled');
-                else cell.classList.remove('filled');
             });
-        }
 
-        function checkGameOver() {
-            let canMoveAny = false;
-
-            for (let i = 0; i < dockShapesData.length; i++) {
-                const shape = dockShapesData[i];
-                if (!shape) continue;
-
+            linesToClearC.forEach(c => {
                 for (let r = 0; r < BOARD_SIZE; r++) {
-                    for (let c = 0; c < BOARD_SIZE; c++) {
-                        if (canPlace(shape, r, c)) {
-                            canMoveAny = true;
-                            break;
-                        }
-                    }
-                    if (canMoveAny) break;
+                    grid[r][c] = 0;
+                    boardElement.children[r * BOARD_SIZE + c].classList.remove('filled');
                 }
-                if (canMoveAny) break;
+            });
+
+            if (linesToClearR.length > 0 || linesToClearC.length > 0) {
+                score += (linesToClearR.length + linesToClearC.length) * 100;
+                scoreElement.textContent = score;
             }
-
-            if (!canMoveAny && dockShapesData.some(s => s !== null)) {
-                showModal('Game Over', `Այլևս քայլ չկա։ Քո վերջնական միավորները՝ ${score}:`, true);
-            }
-        }
-
-        function showModal(title, desc, isGameOver = false) {
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-desc').innerText = desc;
-            const btn = document.getElementById('modal-btn');
-            
-            if (isGameOver) {
-                btn.innerText = 'Նորից սկսել';
-                btn.onclick = restartGame;
-            } else {
-                btn.innerText = 'Շարունակել';
-                btn.onclick = closeModal;
-            }
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('modal').classList.add('hidden');
-        }
-
-        function restartGame() {
-            boardState = Array(BOARD_SIZE).fill(0).map(() => Array(BOARD_SIZE).fill(0));
-            score = 0;
-            currentLevel = 1;
-            levelStartScore = 0;
-            levelGoal = 200;
-            
-            document.getElementById('score').innerText = '0';
-            document.getElementById('level-display').innerText = 'Level 1';
-            
-            closeModal();
-            updateBoardUI();
-            updateLevelProgress();
-            renderDockShapes();
         }
 
         initBoard();
-        renderDockShapes();
+        spawnShapes();
     </script>
 </body>
 </html>
