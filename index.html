@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Blockudoku Mini App - Harder & Fixed Energy</title>
+    <title>Blockudoku Mini App - Fixed NaN Energy</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -92,7 +92,7 @@
         </button>
     </nav>
 
-    <!-- Modal (Game Over / Level Up / No Energy) -->
+    <!-- Modal -->
     <div id="modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
         <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl text-center max-w-xs w-full shadow-2xl">
             <div class="text-4xl mb-2" id="modal-icon">🎮</div>
@@ -119,7 +119,6 @@
 
         let board = Array(GRID_SIZE).fill(0).map(() => Array(GRID_SIZE).fill(0));
         
-        // --- Harder Level Economics (Increased Targets) ---
         const LEVEL_CONFIGS = [
             { target: 60, bonus: 10 },
             { target: 90, bonus: 15 },
@@ -130,20 +129,9 @@
             { target: 260, bonus: 40 },
             { target: 300, bonus: 45 },
             { target: 350, bonus: 50 },
-            { target: 400, bonus: 60 },
-            { target: 450, bonus: 70 },
-            { target: 500, bonus: 80 },
-            { target: 560, bonus: 90 },
-            { target: 620, bonus: 100 },
-            { target: 680, bonus: 110 },
-            { target: 750, bonus: 120 },
-            { target: 820, bonus: 130 },
-            { target: 900, bonus: 140 },
-            { target: 980, bonus: 150 },
-            { target: 1100, bonus: 200 }
+            { target: 400, bonus: 60 }
         ];
 
-        // Basic Easy Shapes
         const SHAPES_EASY = [
             [[1]], 
             [[1, 1]], [[1], [1]], 
@@ -151,7 +139,6 @@
             [[1, 1, 1]], [[1], [1], [1]]
         ];
 
-        // Medium Shapes - Large bars, L-shapes, T-shapes
         const SHAPES_MEDIUM = [
             ...SHAPES_EASY,
             [[1, 1, 1, 1]], [[1], [1], [1], [1]],
@@ -160,21 +147,25 @@
             [[1, 1], [1, 0]], [[1, 1], [0, 1]]
         ];
 
-        // Hard Shapes - Large 3x3 blocks, Big Z-shapes, Huge Corner Blocks
         const SHAPES_HARD = [
             ...SHAPES_MEDIUM,
-            [[1, 1, 1], [1, 1, 1], [1, 1, 1]], // 3x3 Block
+            [[1, 1, 1], [1, 1, 1], [1, 1, 1]],
             [[1, 1, 0], [0, 1, 1]], [[0, 1, 1], [1, 1, 0]],
             [[1, 1, 1], [1, 0, 0], [1, 0, 0]], [[1, 1, 1], [0, 0, 1], [0, 0, 1]],
-            [[1, 1, 1, 1, 1]], [[1], [1], [1], [1], [1]] // 5-length Bars
+            [[1, 1, 1, 1, 1]], [[1], [1], [1], [1], [1]]
         ];
 
-        let totalScore = parseInt(localStorage.getItem('blockudoku_score')) || 0;
-        let currentLevel = parseInt(localStorage.getItem('blockudoku_level')) || 1;
-        let matchScore = 0; 
-        let energy = localStorage.getItem('blockudoku_energy') !== null ? parseInt(localStorage.getItem('blockudoku_energy')) : 5;
+        // Safe LocalStorage Retrieval (Prevents NaN bug)
+        let totalScore = parseInt(localStorage.getItem('blockudoku_score'));
+        if (isNaN(totalScore)) totalScore = 0;
 
-        // Visual Effects Arrays
+        let currentLevel = parseInt(localStorage.getItem('blockudoku_level'));
+        if (isNaN(currentLevel) || currentLevel < 1) currentLevel = 1;
+
+        let energy = parseInt(localStorage.getItem('blockudoku_energy'));
+        if (isNaN(energy)) energy = 5; // Automatic Fix for NaN
+
+        let matchScore = 0; 
         let floatingTexts = [];
         let streakCount = 0;
 
@@ -193,6 +184,10 @@
         }
 
         function updateUI() {
+            // Check NaN just in case
+            if (isNaN(energy)) energy = 5;
+            if (isNaN(totalScore)) totalScore = 0;
+
             const config = getCurrentLevelConfig();
             document.getElementById('score').innerText = totalScore;
             document.getElementById('level-display').innerText = `Level ${currentLevel}`;
@@ -270,13 +265,11 @@
 
             ctx.clearRect(0, 0, width, height);
 
-            // 1. Board Background
             ctx.fillStyle = '#1e293b';
             ctx.beginPath();
             ctx.roundRect(boardOffsetX - 4, boardOffsetY - 4, (cellSize * GRID_SIZE) + 8, (cellSize * GRID_SIZE) + 8, 12);
             ctx.fill();
 
-            // 2. Board Grid Cells
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
                     const x = boardOffsetX + c * cellSize;
@@ -289,7 +282,6 @@
                 }
             }
 
-            // 3. Highlight Preview
             if (dragging) {
                 const target = getShapeBoardTarget(dragging.x, dragging.y, dragging.shape);
                 if (canPlace(dragging.shape, target.r, target.c)) {
@@ -308,7 +300,6 @@
                 }
             }
 
-            // 4. Floating Texts (FX)
             for (let i = floatingTexts.length - 1; i >= 0; i--) {
                 let ft = floatingTexts[i];
                 ctx.save();
@@ -329,14 +320,12 @@
                 }
             }
 
-            // 5. Dock Background
             const dockHeight = height - dockY - 5;
             ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
             ctx.beginPath();
             ctx.roundRect(0, dockY - 5, width, dockHeight, 12);
             ctx.fill();
 
-            // 6. Dock Shapes
             const dockWidth = width / 3;
             for (let i = 0; i < 3; i++) {
                 if (dock[i] && (!dragging || dragging.index !== i)) {
@@ -352,7 +341,6 @@
                 }
             }
 
-            // 7. Active Dragged Shape
             if (dragging) {
                 const shape = dragging.shape;
                 const drawX = dragging.x - (shape[0].length * cellSize) / 2;
@@ -389,7 +377,6 @@
         }
 
         canvas.addEventListener('pointerdown', (e) => {
-            // Check Energy before playing
             if (energy <= 0) {
                 showModal('⚡ Էներգիան սպառվել է', 'Դուք սպառել եք ձեր 5 էներգիան։ Սպասեք էներգիայի վերականգնմանը:', '⚡', () => {});
                 return;
@@ -498,8 +485,6 @@
             cleared = fullRows.length + fullCols.length;
             if (cleared > 0) {
                 streakCount++;
-                
-                // Slightly reduced points for harder gameplay
                 let gained = cleared === 1 ? 1 : (cleared === 2 ? 2 : 4);
                 
                 if (streakCount > 1) {
@@ -552,10 +537,9 @@
                 if (canMoveAny) break;
             }
 
-            // GAME OVER - Deduct Energy here
             if (!canMoveAny && dock.some(s => s !== null)) {
                 if (energy > 0) {
-                    energy--; // Deduct 1 Energy
+                    energy--;
                 }
                 updateUI();
 
