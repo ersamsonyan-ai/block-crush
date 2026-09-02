@@ -2,68 +2,111 @@
 <html lang="hy">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Block Puzzle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Telegram Block Puzzle Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        
         body {
             background: #0f172a;
             color: #fff;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            overflow: hidden;
         }
 
+        /* Top Bar */
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+        }
+
+        .coins-display {
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Tab Content Screens */
+        .tab-content {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 130px);
+            overflow-y: auto;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Game Tab */
         .game-header {
-            margin-bottom: 20px;
-            font-size: 24px;
+            margin-bottom: 15px;
+            font-size: 20px;
             font-weight: bold;
         }
 
         .score-box {
             background: rgba(255, 255, 255, 0.1);
-            padding: 10px 20px;
-            border-radius: 10px;
-        }
-
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
+            padding: 8px 20px;
+            border-radius: 12px;
         }
 
         .board {
             display: grid;
-            grid-template-columns: repeat(8, 45px);
-            grid-template-rows: repeat(8, 45px);
-            gap: 5px;
-            padding: 10px;
+            grid-template-columns: repeat(8, 42px);
+            grid-template-rows: repeat(8, 42px);
+            gap: 4px;
+            padding: 8px;
             background: #1e293b;
-            border-radius: 15px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             position: relative;
         }
 
         .cell {
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
+            border-radius: 6px;
             transition: background 0.1s;
         }
 
-        /* Highlight preview when dragging */
         .cell.highlight {
             background: rgba(0, 255, 204, 0.4) !important;
             border: 1px solid #00ffcc;
         }
 
         .cell.filled {
-            background: #3b82f6;
-            box-shadow: inset 0 0 5px rgba(255,255,255,0.5);
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            box-shadow: inset 0 0 6px rgba(255,255,255,0.4);
         }
 
         .shapes-container {
@@ -71,18 +114,20 @@
             gap: 15px;
             justify-content: center;
             align-items: center;
+            margin-top: 25px;
             min-height: 100px;
             width: 100%;
         }
 
         .shape-slot {
-            width: 100px;
-            height: 100px;
+            width: 95px;
+            height: 95px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: rgba(255, 255, 255, 0.02);
-            border-radius: 10px;
+            border-radius: 12px;
+            border: 1px dashed rgba(255,255,255,0.1);
         }
 
         .shape {
@@ -93,10 +138,10 @@
         }
 
         .shape-block {
-            width: 22px;
-            height: 22px;
-            background: #3b82f6;
-            border-radius: 3px;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            border-radius: 4px;
         }
 
         .dragging {
@@ -106,33 +151,216 @@
         }
 
         .dragging .shape-block {
-            width: 45px;
-            height: 45px;
-            gap: 5px;
+            width: 42px;
+            height: 42px;
+            gap: 4px;
+        }
+
+        /* Cards & Buttons */
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn:disabled {
+            background: #475569;
+            opacity: 0.6;
+        }
+
+        /* Wallet & Referral Cards */
+        .info-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        .balance-text {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #ffd700;
+        }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            width: 100%;
+            height: 65px;
+            background: #1e293b;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #94a3b8;
+            font-size: 11px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 20%;
+        }
+
+        .nav-item.active {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .nav-icon {
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
 
-    <div class="game-header">
-        <div class="score-box">Միավոր: <span id="score">0</span></div>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="user-info">
+            <span id="username">Խաղացող</span>
+        </div>
+        <div class="coins-display">
+            🪙 <span id="coins-count">0</span>
+        </div>
     </div>
 
-    <div class="game-container">
+    <!-- 1. GAME TAB -->
+    <div id="tab-game" class="tab-content active">
+        <div class="game-header">
+            <div class="score-box">Միավոր: <span id="score">0</span></div>
+        </div>
         <div class="board" id="board"></div>
         <div class="shapes-container" id="shapes-container"></div>
     </div>
 
+    <!-- 2. TASKS TAB -->
+    <div id="tab-tasks" class="tab-content">
+        <h2 style="margin-bottom: 20px;">Առաջադրանքներ</h2>
+        <div class="card">
+            <div>
+                <h4>Միանալ Telegram ալիքին</h4>
+                <p style="font-size: 12px; color: #94a3b8;">+500 Մետաղադրամ</p>
+            </div>
+            <button class="btn" onclick="completeTask(this, 500)">Կատարել</button>
+        </div>
+        <div class="card">
+            <div>
+                <h4>Հրավիրել 3 ընկեր</h4>
+                <p style="font-size: 12px; color: #94a3b8;">+1000 Մետաղադրամ</p>
+            </div>
+            <button class="btn" onclick="completeTask(this, 1000)">Կատարել</button>
+        </div>
+    </div>
+
+    <!-- 3. BONUS TAB -->
+    <div id="tab-bonus" class="tab-content">
+        <h2 style="margin-bottom: 20px;">Օրական Բոնուս</h2>
+        <div class="info-card">
+            <h3>Օր 1</h3>
+            <p style="margin: 10px 0; color: #94a3b8;">Ստացեք ձեր ամենօրյա պարգևատրումը</p>
+            <div class="balance-text">+200 🪙</div>
+            <button class="btn" id="claim-bonus-btn" style="width: 100%; padding: 12px;" onclick="claimBonus()">Ստանալ Բոնուսը</button>
+        </div>
+    </div>
+
+    <!-- 4. REFERRAL TAB -->
+    <div id="tab-ref" class="tab-content">
+        <h2 style="margin-bottom: 20px;">Ընկերներ</h2>
+        <div class="info-card">
+            <h3>Հրավիրեք ընկերների</h3>
+            <p style="margin: 10px 0; color: #94a3b8;">Ստացեք 500 🪙 ամեն հրավիրված ընկերոջ համար</p>
+            <button class="btn" style="width: 100%; padding: 12px; background: #22c55e;" onclick="shareReferral()">Հրավիրել Ընկերոջը</button>
+        </div>
+    </div>
+
+    <!-- 5. WALLET TAB -->
+    <div id="tab-wallet" class="tab-content">
+        <h2 style="margin-bottom: 20px;">Դրամապանակ</h2>
+        <div class="info-card">
+            <p style="color: #94a3b8;">Ընդհանուր Հաշվեկշիռ</p>
+            <div class="balance-text"><span id="wallet-coins">0</span> 🪙</div>
+            <button class="btn" style="width: 100%; padding: 12px; background: #0088cc;" onclick="connectWallet()">Կապակցել TON Wallet</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('game', this)">
+            <span class="nav-icon">🎮</span>
+            <span>Խաղ</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('tasks', this)">
+            <span class="nav-icon">📋</span>
+            <span>Tasks</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('bonus', this)">
+            <span class="nav-icon">🎁</span>
+            <span>Bonus</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('ref', this)">
+            <span class="nav-icon">👥</span>
+            <span>Friends</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('wallet', this)">
+            <span class="nav-icon">👛</span>
+            <span>Wallet</span>
+        </button>
+    </div>
+
     <script>
+        // Telegram WebApp Integration
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+            if (tg.initDataUnsafe?.user) {
+                document.getElementById('username').textContent = tg.initDataUnsafe.user.first_name;
+            }
+        }
+
+        // Global State
+        let totalCoins = 0;
+        let score = 0;
         const BOARD_SIZE = 8;
-        const CELL_SIZE = 45;
-        const CELL_GAP = 5;
+        const CELL_SIZE = 42;
+        const CELL_GAP = 4;
+
         const boardElement = document.getElementById('board');
         const scoreElement = document.getElementById('score');
+        const coinsElement = document.getElementById('coins-count');
+        const walletCoinsElement = document.getElementById('wallet-coins');
         const shapesContainer = document.getElementById('shapes-container');
 
         let grid = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(0));
-        let score = 0;
 
         const SHAPES = [
             [[1]], 
@@ -145,6 +373,48 @@
             [[1, 1, 1, 1]]
         ];
 
+        // Tab Switching Logic
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function updateCoins(amount) {
+            totalCoins += amount;
+            coinsElement.textContent = totalCoins;
+            walletCoinsElement.textContent = totalCoins;
+        }
+
+        function completeTask(btnElement, reward) {
+            updateCoins(reward);
+            btnElement.disabled = true;
+            btnElement.textContent = "Կատարված է";
+        }
+
+        function claimBonus() {
+            updateCoins(200);
+            const btn = document.getElementById('claim-bonus-btn');
+            btn.disabled = true;
+            btn.textContent = "Ստացված է";
+        }
+
+        function shareReferral() {
+            const userRefLink = `https://t.me/share/url?url=https://t.me/your_bot?start=ref123&text=Միացիր%20ինձ%20այս%20խաղում!`;
+            if (tg) {
+                tg.openTelegramLink(userRefLink);
+            } else {
+                window.open(userRefLink, '_blank');
+            }
+        }
+
+        function connectWallet() {
+            alert("TON Wallet կապակցման ֆունկցիան շուտով հասանելի կլինի:");
+        }
+
+        /* --- GAME MECHANICS WITH ACCURATE SNAP & MAGNET --- */
         function initBoard() {
             boardElement.innerHTML = '';
             for (let r = 0; r < BOARD_SIZE; r++) {
@@ -176,7 +446,7 @@
         function createShapeElement(matrix) {
             const shape = document.createElement('div');
             shape.classList.add('shape');
-            shape.style.gridTemplateColumns = `repeat(${matrix[0].length}, 22px)`;
+            shape.style.gridTemplateColumns = `repeat(${matrix[0].length}, 20px)`;
             
             matrix.forEach(row => {
                 row.forEach(val => {
@@ -220,7 +490,6 @@
 
                 const target = getGridTarget(e.clientX, e.clientY, matrix);
                 
-                // SNAP / AUTOMATIC POSITIONAL PLACEMENT
                 if (target && canPlace(matrix, target.r, target.c)) {
                     placeShape(matrix, target.r, target.c);
                     element.parentElement.innerHTML = '';
@@ -239,7 +508,6 @@
             element.addEventListener('pointerdown', onPointerDown);
         }
 
-        // Exact Snapping calculation
         function getGridTarget(clientX, clientY, matrix) {
             const rect = boardElement.getBoundingClientRect();
             const shapeW = matrix[0].length * CELL_SIZE + (matrix[0].length - 1) * CELL_GAP;
@@ -248,8 +516,8 @@
             const shapeLeft = clientX - shapeW / 2;
             const shapeTop = clientY - shapeH / 2;
 
-            const relX = shapeLeft - rect.left - 10;
-            const relY = shapeTop - rect.top - 10;
+            const relX = shapeLeft - rect.left - 8;
+            const relY = shapeTop - rect.top - 8;
 
             const col = Math.round(relX / (CELL_SIZE + CELL_GAP));
             const row = Math.round(relY / (CELL_SIZE + CELL_GAP));
@@ -307,6 +575,7 @@
             }
             score += 10;
             scoreElement.textContent = score;
+            updateCoins(2);
         }
 
         function checkAndClearLines() {
@@ -334,9 +603,11 @@
                 }
             });
 
-            if (linesToClearR.length > 0 || linesToClearC.length > 0) {
-                score += (linesToClearR.length + linesToClearC.length) * 100;
+            const clearedCount = linesToClearR.length + linesToClearC.length;
+            if (clearedCount > 0) {
+                score += clearedCount * 100;
                 scoreElement.textContent = score;
+                updateCoins(clearedCount * 10);
             }
         }
 
